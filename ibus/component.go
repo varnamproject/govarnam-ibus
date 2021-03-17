@@ -3,8 +3,9 @@ package ibus
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/godbus/dbus"
 	"io"
+
+	"github.com/godbus/dbus/v5"
 )
 
 type Component struct {
