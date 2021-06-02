@@ -1,2 +1,6 @@
 github.com/godbus/dbus/v5 v5.0.3 h1:ZqHaoEF7TBzh4jzPmqVhE/5A1z9of6orkAe5uHoAeME=
 github.com/godbus/dbus/v5 v5.0.3/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
+github.com/mattn/go-sqlite3 v1.14.6 h1:dNPt6NO46WmLVt2DLNpwczCmdV5boIZ6g/tlDrlRUbg=
+github.com/mattn/go-sqlite3 v1.14.6/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
+gitlab.com/subins2000/govarnam v0.0.0-20210601183813-de1d79352eb0 h1:iP74vJD+MEks6dRj9VyF5jz5JRdrzqUCOGRj32DOxaw=
+gitlab.com/subins2000/govarnam v0.0.0-20210601183813-de1d79352eb0/go.mod h1:R19+5ay/L3I3xSXBvjhW+YmrY/+iAIbvNWtCmC+qryM=

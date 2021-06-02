@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"./ibus"
+	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
-	"github.com/godbus/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 var embeded = flag.Bool("ibus", false, "Run the embeded ibus component")

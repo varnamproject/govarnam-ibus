@@ -4,45 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"./ibus"
-	"github.com/godbus/dbus"
+	"gitlab.com/subins2000/govarnam-ibus/ibus"
+
+	"github.com/godbus/dbus/v5"
 	"gitlab.com/subins2000/govarnam/govarnam"
 )
-
-const IBUS_CONTROL_MASK = 1 << 2
-const IBUS_MOD1_MASK = 1 << 3
-const IBUS_ORIENTATION_VERTICAL = 1
-const IBUS_RELEASE_MASK = 1 << 30
-
-const IBUS_space = 0x020
-const IBUS_Return = 0xff0d
-const IBUS_Escape = 0xff1b
-const IBUS_Left = 0xff51
-const IBUS_Right = 0xff53
-const IBUS_Up = 0xff52
-const IBUS_Down = 0xff54
-const IBUS_BackSpace = 0xff08
-const IBUS_Delete = 0xffff
-
-const IBUS_1 = 0xff0d
-const IBUS_2 = 0xff0d
-const IBUS_3 = 0xff0d
-const IBUS_4 = 0xff0d
-const IBUS_5 = 0xff0d
-const IBUS_6 = 0xff0d
-const IBUS_7 = 0xff0d
-const IBUS_8 = 0xff0d
-const IBUS_9 = 0xff0d
-
-const IBUS_KP_1 = 0xff0d
-const IBUS_KP_2 = 0xff0d
-const IBUS_KP_3 = 0xff0d
-const IBUS_KP_4 = 0xff0d
-const IBUS_KP_5 = 0xff0d
-const IBUS_KP_6 = 0xff0d
-const IBUS_KP_7 = 0xff0d
-const IBUS_KP_8 = 0xff0d
-const IBUS_KP_9 = 0xff0d
 
 var handle *govarnam.Varnam
 
@@ -133,12 +99,12 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 	fmt.Println("Process Key Event > ", keyval, keycode, modifiers)
 
 	// Ignore key release events
-	is_press := modifiers&IBUS_RELEASE_MASK == 0
+	is_press := modifiers&ibus.IBUS_RELEASE_MASK == 0
 	if !is_press {
 		return false, nil
 	}
 
-	modifiers = modifiers & (IBUS_CONTROL_MASK | IBUS_MOD1_MASK)
+	modifiers = modifiers & (ibus.IBUS_CONTROL_MASK | ibus.IBUS_MOD1_MASK)
 
 	if modifiers != 0 {
 		if len(e.preedit) == 0 {
@@ -149,7 +115,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 	}
 
 	switch keyval {
-	case IBUS_space:
+	case ibus.IBUS_space:
 		text := e.GetCandidate()
 		if text == nil {
 			e.VarnamCommitText(ibus.NewText(string(e.preedit)+" "), false)
@@ -159,7 +125,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		}
 		return true, nil
 
-	case IBUS_Return:
+	case ibus.IBUS_Return:
 		text := e.GetCandidate()
 		if text == nil {
 			e.VarnamCommitText(ibus.NewText(string(e.preedit)), false)
@@ -169,7 +135,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		}
 		return true, nil
 
-	case IBUS_Left:
+	case ibus.IBUS_Left:
 		if len(e.preedit) == 0 {
 			return false, nil
 		}
@@ -179,7 +145,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		}
 		return true, nil
 
-	case IBUS_Right:
+	case ibus.IBUS_Right:
 		if len(e.preedit) == 0 {
 			return false, nil
 		}
@@ -189,7 +155,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		}
 		return true, nil
 
-	case IBUS_Up:
+	case ibus.IBUS_Up:
 		if len(e.preedit) == 0 {
 			return false, nil
 		}
@@ -197,7 +163,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		e.UpdateLookupTable(e.table, true)
 		return true, nil
 
-	case IBUS_Down:
+	case ibus.IBUS_Down:
 		if len(e.preedit) == 0 {
 			return false, nil
 		}
@@ -205,7 +171,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		e.UpdateLookupTable(e.table, true)
 		return true, nil
 
-	case IBUS_BackSpace:
+	case ibus.IBUS_BackSpace:
 		if len(e.preedit) == 0 {
 			return false, nil
 		}
@@ -279,7 +245,7 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 		ibus.NewLookupTable()}
 
 	// TODO add SetOrientation method
-	// engine.table.emitSignal("SetOrientation", IBUS_ORIENTATION_VERTICAL)
+	// engine.table.emitSignal("SetOrientation", ibus.IBUS_ORIENTATION_VERTICAL)
 
 	var err error
 	handle, err = govarnam.InitFromLang("ml")
