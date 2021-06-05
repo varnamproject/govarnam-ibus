@@ -1,10 +1,9 @@
 package ibus
 
 const (
-	IBUS_CONTROL_MASK         = 1 << 2
-	IBUS_MOD1_MASK            = 1 << 3
-	IBUS_ORIENTATION_VERTICAL = 1
-	IBUS_RELEASE_MASK         = 1 << 30
+	IBUS_CONTROL_MASK = 1 << 2
+	IBUS_MOD1_MASK    = 1 << 3
+	IBUS_RELEASE_MASK = 1 << 30
 
 	IBUS_space     = 0x020
 	IBUS_Return    = 0xff0d

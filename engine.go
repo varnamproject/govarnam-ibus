@@ -36,7 +36,7 @@ func (e *VarnamEngine) VarnamClearState() {
 
 func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool {
 	if shouldLearn {
-		handle.Learn(text.Text)
+		go handle.Learn(text.Text)
 		// TODO error handle
 	}
 	e.CommitText(text)
@@ -45,6 +45,7 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 }
 
 func (e *VarnamEngine) VarnamUpdateLookupTable() {
+	txt := string(e.preedit)
 	if len(e.preedit) == 0 {
 		e.HideLookupTable()
 		return
@@ -54,33 +55,62 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 
 	// TODO clear lookup table using emitSignal maybe ?
 	// Is this the correct way ?
-	e.table = ibus.NewLookupTable()
+	table := ibus.NewLookupTable()
 
-	result := handle.Transliterate(string(e.preedit), 2)
+	result := handle.Transliterate(string(e.preedit))
 
-	e.table.AppendCandidate(result.GreedyTokenized[0].Word)
-	e.table.AppendLabel("1")
+	// Don't update lookup table if the result is late and next suggestion lookup has begun
+	if txt != string(e.preedit) {
+		return
+	}
 
-	label := 2
+	label := 1
+
+	for _, sug := range result.ExactMatch {
+		table.AppendCandidate(sug.Word)
+		table.AppendLabel(fmt.Sprint(label) + ":")
+		label++
+	}
+
+	// POINTER1: If no exact matches show greedy first
+	if len(result.ExactMatch) == 0 && len(result.GreedyTokenized) > 0 {
+		table.AppendCandidate(result.GreedyTokenized[0].Word)
+		table.AppendLabel(fmt.Sprint(label) + ":")
+		label++
+	}
+
 	for _, sug := range result.Suggestions {
-		e.table.AppendCandidate(sug.Word)
-		e.table.AppendLabel(fmt.Sprint(label) + ":")
+		table.AppendCandidate(sug.Word)
+		table.AppendLabel(fmt.Sprint(label) + ":")
 		label++
 	}
 
 	if len(result.Suggestions) == 0 {
 		for _, sug := range result.GreedyTokenized {
-			e.table.AppendCandidate(sug.Word)
-			e.table.AppendLabel(fmt.Sprint(label) + ":")
+			table.AppendCandidate(sug.Word)
+			table.AppendLabel(fmt.Sprint(label) + ":")
 			label++
 		}
 	}
 
-	// Append original string at end
-	e.table.AppendCandidate(string(e.preedit))
+	// POINTER1: If exact match exist, show greedy last
+	if len(result.ExactMatch) > 0 && len(result.GreedyTokenized) > 0 {
+		table.AppendCandidate(result.GreedyTokenized[0].Word)
+		table.AppendLabel(fmt.Sprint(label) + ":")
+		label++
+	}
 
+	// Append original string at end
+	table.AppendCandidate(string(e.preedit))
+	table.AppendLabel(fmt.Sprint(label) + ":")
+
+	// Don't update lookup table if the result is late and next suggestion lookup has begun
+	if txt != string(e.preedit) {
+		return
+	}
+
+	e.table = table
 	e.UpdateLookupTable(e.table, true)
-	fmt.Println(string(e.preedit))
 }
 
 func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
@@ -119,7 +149,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		text := e.GetCandidate()
 		if text == nil {
 			e.VarnamCommitText(ibus.NewText(string(e.preedit)+" "), false)
-			return false, nil
+			return true, nil
 		} else {
 			e.VarnamCommitText(ibus.NewText(text.Text+" "), true)
 		}
@@ -134,6 +164,13 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 			e.VarnamCommitText(text, true)
 		}
 		return true, nil
+
+	case ibus.IBUS_Escape:
+		if len(e.preedit) == 0 {
+			return false, nil
+		}
+		e.VarnamCommitText(ibus.NewText(string(e.preedit)), false)
+		return false, nil
 
 	case ibus.IBUS_Left:
 		if len(e.preedit) == 0 {
@@ -159,7 +196,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		if len(e.preedit) == 0 {
 			return false, nil
 		}
-		e.table.CursorPos--
+		e.table.CursorUp()
 		e.UpdateLookupTable(e.table, true)
 		return true, nil
 
@@ -167,7 +204,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		if len(e.preedit) == 0 {
 			return false, nil
 		}
-		e.table.CursorPos++
+		e.table.CursorDown()
 		e.UpdateLookupTable(e.table, true)
 		return true, nil
 
@@ -181,6 +218,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 			e.VarnamUpdatePreedit()
 			e.VarnamUpdateLookupTable()
 			if len(e.preedit) == 0 {
+				/* Current backspace has cleared the preedit. Need to reset the engine state */
 				e.VarnamClearState()
 			}
 		}
@@ -252,6 +290,7 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	if err != nil {
 		log.Fatal(err)
 	}
+	handle.Debug(true)
 
 	ibus.PublishEngine(conn, objectPath, engine)
 	return objectPath

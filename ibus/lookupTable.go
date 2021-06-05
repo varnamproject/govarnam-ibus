@@ -19,10 +19,10 @@ type LookupTable struct {
 func NewLookupTable() *LookupTable {
 	lt := &LookupTable{}
 	lt.Name = "IBusLookupTable"
-	lt.PageSize = 5
+	lt.PageSize = 9
 	lt.CursorPos = 0
 	lt.CursorVisible = true
-	lt.Round = false
+	lt.Round = true
 	lt.Orientation = ORIENTATION_SYSTEM
 
 	return lt
@@ -36,4 +36,20 @@ func (lt *LookupTable) AppendCandidate(text string) {
 func (lt *LookupTable) AppendLabel(label string) {
 	l := NewText(label)
 	lt.Labels = append(lt.Labels, dbus.MakeVariant(*l))
+}
+
+func (lt *LookupTable) CursorUp() {
+	if lt.CursorPos == 0 && lt.Round {
+		lt.CursorPos = uint32(len(lt.Candidates)) - 1
+	} else {
+		lt.CursorPos--
+	}
+}
+
+func (lt *LookupTable) CursorDown() {
+	if lt.CursorPos == uint32(len(lt.Candidates))-1 && lt.Round {
+		lt.CursorPos = uint32(0)
+	} else {
+		lt.CursorPos++
+	}
 }
