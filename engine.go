@@ -125,6 +125,14 @@ func (e *VarnamEngine) GetCandidate() *ibus.Text {
 	return e.GetCandidateAt(e.table.CursorPos)
 }
 
+func isWordBreak(ukeyval uint32) bool {
+	keyval := int(ukeyval)
+	if keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 || keyval == 34 || keyval == 59 || keyval == 39 {
+		return true
+	}
+	return false
+}
+
 func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers uint32) (bool, *dbus.Error) {
 	fmt.Println("Process Key Event > ", keyval, keycode, modifiers)
 
@@ -149,7 +157,6 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		text := e.GetCandidate()
 		if text == nil {
 			e.VarnamCommitText(ibus.NewText(string(e.preedit)+" "), false)
-			return true, nil
 		} else {
 			e.VarnamCommitText(ibus.NewText(text.Text+" "), true)
 		}
@@ -223,6 +230,15 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 			}
 		}
 		return true, nil
+	}
+
+	if isWordBreak(keyval) {
+		text := e.GetCandidate()
+		if text != nil {
+			e.VarnamCommitText(ibus.NewText(text.Text+string(keyval)), true)
+			return true, nil
+		}
+		return false, nil
 	}
 
 	if keyval <= 128 {
