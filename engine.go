@@ -230,6 +230,21 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 			}
 		}
 		return true, nil
+
+	case ibus.IBUS_Delete:
+		if len(e.preedit) == 0 {
+			return false, nil
+		}
+		if int(e.cursorPos) < len(e.preedit) {
+			e.preedit = removeAtIndex(e.preedit, e.cursorPos)
+			e.VarnamUpdatePreedit()
+			e.VarnamUpdateLookupTable()
+			if len(e.preedit) == 0 {
+				/* Current backspace has cleared the preedit. Need to reset the engine state */
+				e.VarnamClearState()
+			}
+		}
+		return true, nil
 	}
 
 	if isWordBreak(keyval) {
