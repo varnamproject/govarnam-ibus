@@ -114,7 +114,7 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 }
 
 func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
-	if len(e.table.Candidates) == 0 {
+	if int(index) > len(e.table.Candidates)-1 {
 		return nil
 	}
 	text := e.table.Candidates[index].Value().(ibus.Text)
@@ -123,6 +123,14 @@ func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
 
 func (e *VarnamEngine) GetCandidate() *ibus.Text {
 	return e.GetCandidateAt(e.table.CursorPos)
+}
+
+func (e *VarnamEngine) VarnamCommitCandidateAt(index int) (bool, *dbus.Error) {
+	text := e.GetCandidateAt(uint32(index))
+	if text != nil {
+		return e.VarnamCommitText(text, true), nil
+	}
+	return false, nil
 }
 
 func isWordBreak(ukeyval uint32) bool {
@@ -240,11 +248,34 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 			e.VarnamUpdatePreedit()
 			e.VarnamUpdateLookupTable()
 			if len(e.preedit) == 0 {
-				/* Current backspace has cleared the preedit. Need to reset the engine state */
+				/* Current delete has cleared the preedit. Need to reset the engine state */
 				e.VarnamClearState()
 			}
 		}
 		return true, nil
+
+	case ibus.IBUS_0, ibus.IBUS_KP_0:
+		// Commit the text itself
+		e.VarnamCommitText(ibus.NewText(string(e.preedit)), false)
+		return true, nil
+	case ibus.IBUS_1, ibus.IBUS_KP_1:
+		return e.VarnamCommitCandidateAt(0)
+	case ibus.IBUS_2, ibus.IBUS_KP_2:
+		return e.VarnamCommitCandidateAt(1)
+	case ibus.IBUS_3, ibus.IBUS_KP_3:
+		return e.VarnamCommitCandidateAt(2)
+	case ibus.IBUS_4, ibus.IBUS_KP_4:
+		return e.VarnamCommitCandidateAt(3)
+	case ibus.IBUS_5, ibus.IBUS_KP_5:
+		return e.VarnamCommitCandidateAt(4)
+	case ibus.IBUS_6, ibus.IBUS_KP_6:
+		return e.VarnamCommitCandidateAt(5)
+	case ibus.IBUS_7, ibus.IBUS_KP_7:
+		return e.VarnamCommitCandidateAt(6)
+	case ibus.IBUS_8, ibus.IBUS_KP_8:
+		return e.VarnamCommitCandidateAt(7)
+	case ibus.IBUS_9, ibus.IBUS_KP_9:
+		return e.VarnamCommitCandidateAt(8)
 	}
 
 	if isWordBreak(keyval) {
