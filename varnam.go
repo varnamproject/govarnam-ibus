@@ -18,7 +18,7 @@ func makeComponent() *ibus.Component {
 
 	component := ibus.NewComponent(
 		"org.freedesktop.IBus.Varnam",
-		"Varnam Input Engine",
+		"GoVarnam Input Engine", // TODO change to Varnam
 		"0.2",
 		"AGPL-3.0",
 		"Subin Siby",
@@ -27,9 +27,9 @@ func makeComponent() *ibus.Component {
 		"ibus-varnam")
 
 	avroenginedesc := ibus.SmallEngineDesc(
-		"varnam",
-		"Varnam",
-		"Varnam Input Method",
+		"govarnam",
+		"GoVarnam", // TODO change to Varnam
+		"GoVarnam Input Method",
 		"ml",
 		"AGPL-3.0",
 		"Subin Siby",
