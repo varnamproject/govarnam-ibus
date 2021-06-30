@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -14,10 +15,12 @@ var handle *govarnam.Varnam
 
 type VarnamEngine struct {
 	ibus.Engine
-	propList  *ibus.PropList
-	preedit   []rune
-	cursorPos uint32
-	table     *ibus.LookupTable
+	propList          *ibus.PropList
+	preedit           []rune
+	cursorPos         uint32
+	table             *ibus.LookupTable
+	transliterateCTX  context.Context
+	updateTableCancel context.CancelFunc
 }
 
 func (e *VarnamEngine) VarnamUpdatePreedit() {
@@ -29,14 +32,13 @@ func (e *VarnamEngine) VarnamClearState() {
 	e.cursorPos = 0
 	e.VarnamUpdatePreedit()
 
-	// TODO Is this the correct way to clear ?
-	e.table = ibus.NewLookupTable()
+	e.table.Clear()
 	e.HideLookupTable()
 }
 
 func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool {
 	if shouldLearn {
-		go handle.Learn(text.Text)
+		go handle.Learn(text.Text, 0)
 		// TODO error handle
 	}
 	e.CommitText(text)
@@ -44,20 +46,11 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 	return true
 }
 
-func (e *VarnamEngine) VarnamUpdateLookupTable() {
+func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 	txt := string(e.preedit)
-	if len(e.preedit) == 0 {
-		e.HideLookupTable()
-		return
-	}
-
 	fmt.Println(string(e.preedit))
 
-	// TODO clear lookup table using emitSignal maybe ?
-	// Is this the correct way ?
-	table := ibus.NewLookupTable()
-
-	result := handle.Transliterate(string(e.preedit))
+	result := handle.TransliterateWithContext(ctx, string(e.preedit))
 
 	// Don't update lookup table if the result is late and next suggestion lookup has begun
 	if txt != string(e.preedit) {
@@ -67,50 +60,63 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 	label := 1
 
 	for _, sug := range result.ExactMatch {
-		table.AppendCandidate(sug.Word)
-		table.AppendLabel(fmt.Sprint(label) + ":")
+		e.table.AppendCandidate(sug.Word)
+		e.table.AppendLabel(fmt.Sprint(label) + ":")
 		label++
 	}
 
-	// POINTER1: If no exact matches show greedy first
-	if len(result.ExactMatch) == 0 && len(result.GreedyTokenized) > 0 {
-		table.AppendCandidate(result.GreedyTokenized[0].Word)
-		table.AppendLabel(fmt.Sprint(label) + ":")
-		label++
-	}
-
-	for _, sug := range result.Suggestions {
-		table.AppendCandidate(sug.Word)
-		table.AppendLabel(fmt.Sprint(label) + ":")
-		label++
-	}
-
-	if len(result.Suggestions) == 0 {
+	// POINTER1: If no dictionary results exist, show greedy first
+	if result.DictionaryResultCount == 0 {
 		for _, sug := range result.GreedyTokenized {
-			table.AppendCandidate(sug.Word)
-			table.AppendLabel(fmt.Sprint(label) + ":")
+			e.table.AppendCandidate(sug.Word)
+			e.table.AppendLabel(fmt.Sprint(label) + ":")
 			label++
 		}
 	}
 
-	// POINTER1: If exact match exist, show greedy last
-	if len(result.ExactMatch) > 0 && len(result.GreedyTokenized) > 0 {
-		table.AppendCandidate(result.GreedyTokenized[0].Word)
-		table.AppendLabel(fmt.Sprint(label) + ":")
+	for _, sug := range result.Suggestions {
+		e.table.AppendCandidate(sug.Word)
+		e.table.AppendLabel(fmt.Sprint(label) + ":")
 		label++
 	}
 
+	// POINTER1: If dictionary results exist, show greedy last
+	if result.DictionaryResultCount > 0 {
+		for _, sug := range result.GreedyTokenized {
+			e.table.AppendCandidate(sug.Word)
+			e.table.AppendLabel(fmt.Sprint(label) + ":")
+			label++
+		}
+	}
+
 	// Append original string at end
-	table.AppendCandidate(string(e.preedit))
-	table.AppendLabel(fmt.Sprint(label) + ":")
+	e.table.AppendCandidate(string(e.preedit))
+	e.table.AppendLabel(fmt.Sprint(label) + ":")
 
 	// Don't update lookup table if the result is late and next suggestion lookup has begun
 	if txt != string(e.preedit) {
 		return
 	}
 
-	e.table = table
 	e.UpdateLookupTable(e.table, true)
+}
+
+func (e *VarnamEngine) VarnamUpdateLookupTable() {
+	if e.updateTableCancel != nil {
+		e.updateTableCancel()
+	}
+
+	if len(e.preedit) == 0 {
+		e.HideLookupTable()
+		return
+	}
+
+	e.table.Clear()
+
+	ctx, cancel := context.WithCancel(e.transliterateCTX)
+	e.updateTableCancel = cancel
+
+	go e.InternalUpdateTable(ctx)
 }
 
 func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
@@ -342,7 +348,9 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 		ibus.NewPropList(propp),
 		[]rune{},
 		0,
-		ibus.NewLookupTable()}
+		ibus.NewLookupTable(),
+		context.Background(),
+		nil}
 
 	// TODO add SetOrientation method
 	// engine.table.emitSignal("SetOrientation", ibus.IBUS_ORIENTATION_VERTICAL)
@@ -352,7 +360,7 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	if err != nil {
 		log.Fatal(err)
 	}
-	handle.Debug(true)
+	handle.Debug = true
 
 	ibus.PublishEngine(conn, objectPath, engine)
 	return objectPath

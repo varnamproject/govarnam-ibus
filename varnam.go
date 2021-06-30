@@ -1,8 +1,22 @@
 package main
 
+/**
+ * govarnam-ibus - An Indian Language Input Method Engine for GNU/Linux
+ * Copyright Subin Siby, 2021
+ * Licensed under AGPL-3.0-only
+ *
+ * gittu-engine - An IBus Engine in Go
+ * goibus - golang implementation of libibus
+ * Copyright Sarim Khan, 2016
+ * Licensed under Mozilla Public License 1.1 ("MPL")
+ */
+
 import (
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
@@ -44,6 +58,9 @@ func makeComponent() *ibus.Component {
 }
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	var Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])

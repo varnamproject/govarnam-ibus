@@ -53,3 +53,8 @@ func (lt *LookupTable) CursorDown() {
 		lt.CursorPos++
 	}
 }
+
+func (lt *LookupTable) Clear() {
+	lt.Candidates = []dbus.Variant{}
+	lt.CursorPos = 0
+}
