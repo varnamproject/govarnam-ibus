@@ -47,58 +47,55 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 }
 
 func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
-	txt := string(e.preedit)
-	fmt.Println(string(e.preedit))
-
-	result := handle.TransliterateWithContext(ctx, string(e.preedit))
-
-	// Don't update lookup table if the result is late and next suggestion lookup has begun
-	if txt != string(e.preedit) {
+	select {
+	case <-ctx.Done():
 		return
-	}
+	default:
+		txt := string(e.preedit)
 
-	label := 1
+		result := handle.TransliterateWithContext(ctx, string(e.preedit))
 
-	for _, sug := range result.ExactMatch {
-		e.table.AppendCandidate(sug.Word)
-		e.table.AppendLabel(fmt.Sprint(label) + ":")
-		label++
-	}
+		// Don't update lookup table if the result is late and next suggestion lookup has begun
+		if txt != string(e.preedit) {
+			return
+		}
 
-	// POINTER1: If no dictionary results exist, show greedy first
-	if result.DictionaryResultCount == 0 {
-		for _, sug := range result.GreedyTokenized {
+		e.table.Clear()
+
+		for _, sug := range result.ExactMatch {
 			e.table.AppendCandidate(sug.Word)
+		}
+
+		// POINTER1: If no dictionary results exist, show greedy first
+		if result.DictionaryResultCount == 0 {
+			for _, sug := range result.GreedyTokenized {
+				e.table.AppendCandidate(sug.Word)
+			}
+		}
+
+		for _, sug := range result.Suggestions {
+			e.table.AppendCandidate(sug.Word)
+		}
+
+		// POINTER1: If dictionary results exist, show greedy last
+		if result.DictionaryResultCount > 0 {
+			for _, sug := range result.GreedyTokenized {
+				e.table.AppendCandidate(sug.Word)
+			}
+		}
+
+		label := uint32(1)
+		for label <= e.table.PageSize {
 			e.table.AppendLabel(fmt.Sprint(label) + ":")
 			label++
 		}
+
+		// Append original string at end
+		e.table.AppendCandidate(string(e.preedit))
+		e.table.AppendLabel("0:")
+
+		e.UpdateLookupTable(e.table, true)
 	}
-
-	for _, sug := range result.Suggestions {
-		e.table.AppendCandidate(sug.Word)
-		e.table.AppendLabel(fmt.Sprint(label) + ":")
-		label++
-	}
-
-	// POINTER1: If dictionary results exist, show greedy last
-	if result.DictionaryResultCount > 0 {
-		for _, sug := range result.GreedyTokenized {
-			e.table.AppendCandidate(sug.Word)
-			e.table.AppendLabel(fmt.Sprint(label) + ":")
-			label++
-		}
-	}
-
-	// Append original string at end
-	e.table.AppendCandidate(string(e.preedit))
-	e.table.AppendLabel(fmt.Sprint(label) + ":")
-
-	// Don't update lookup table if the result is late and next suggestion lookup has begun
-	if txt != string(e.preedit) {
-		return
-	}
-
-	e.UpdateLookupTable(e.table, true)
 }
 
 func (e *VarnamEngine) VarnamUpdateLookupTable() {
@@ -110,8 +107,6 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 		e.HideLookupTable()
 		return
 	}
-
-	e.table.Clear()
 
 	ctx, cancel := context.WithCancel(e.transliterateCTX)
 	e.updateTableCancel = cancel
@@ -131,7 +126,15 @@ func (e *VarnamEngine) GetCandidate() *ibus.Text {
 	return e.GetCandidateAt(e.table.CursorPos)
 }
 
-func (e *VarnamEngine) VarnamCommitCandidateAt(index int) (bool, *dbus.Error) {
+func (e *VarnamEngine) VarnamCommitCandidateAt(index uint32) (bool, *dbus.Error) {
+	page := uint32(e.table.CursorPos / e.table.PageSize)
+
+	index = page*e.table.PageSize + index
+
+	if *debug {
+		fmt.Println("Pagination picker:", len(e.table.Candidates), e.table.CursorPos, page, index)
+	}
+
 	text := e.GetCandidateAt(uint32(index))
 	if text != nil {
 		return e.VarnamCommitText(text, true), nil
@@ -148,7 +151,9 @@ func isWordBreak(ukeyval uint32) bool {
 }
 
 func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers uint32) (bool, *dbus.Error) {
-	fmt.Println("Process Key Event > ", keyval, keycode, modifiers)
+	if *debug {
+		fmt.Println("Process Key Event > ", keyval, keycode, modifiers)
+	}
 
 	// Ignore key release events
 	is_press := modifiers&ibus.IBUS_RELEASE_MASK == 0
@@ -360,7 +365,8 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	if err != nil {
 		log.Fatal(err)
 	}
-	handle.Debug = true
+
+	handle.Debug = *debug
 
 	ibus.PublishEngine(conn, objectPath, engine)
 	return objectPath

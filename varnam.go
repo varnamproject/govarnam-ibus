@@ -24,6 +24,7 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+var debug = flag.Bool("debug", false, "Enable debugging")
 var embeded = flag.Bool("ibus", false, "Run the embeded ibus component")
 var standalone = flag.Bool("standalone", false, "Run standalone by creating new component")
 var generatexml = flag.String("xml", "", "Write xml representation of component to file or stdout if file == \"-\"")
@@ -58,9 +59,11 @@ func makeComponent() *ibus.Component {
 }
 
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	if *debug {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
 
 	var Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
