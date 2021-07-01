@@ -368,6 +368,12 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 
 	handle.Debug = *debug
 
+	configLocal := retrieveSavedConf()
+	if configLocal != nil {
+		handle.DictionarySuggestionsLimit = configLocal.DictionarySuggestionsLimit
+		handle.TokenizerSuggestionsLimit = configLocal.TokenizerSuggestionsLimit
+	}
+
 	ibus.PublishEngine(conn, objectPath, engine)
 	return objectPath
 }

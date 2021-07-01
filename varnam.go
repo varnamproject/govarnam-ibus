@@ -1,14 +1,15 @@
 package main
 
 /**
- * govarnam-ibus - An Indian Language Input Method Engine for GNU/Linux
- * Copyright Subin Siby, 2021
- * Licensed under AGPL-3.0-only
- *
  * gittu-engine - An IBus Engine in Go
  * goibus - golang implementation of libibus
  * Copyright Sarim Khan, 2016
+ * Copyright Nguyen Tran Hau, 2021
+ * https://github.com/sarim/goibus
  * Licensed under Mozilla Public License 1.1 ("MPL")
+ *
+ * Derivative Changes: Modified names, added preferences
+ * Copyright Subin Siby, 2021
  */
 
 import (
@@ -24,10 +25,15 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+// TODO change to Varnam
+const engineName = "GoVarnam"
+const engineCode = "govarnam"
+
 var debug = flag.Bool("debug", false, "Enable debugging")
 var embeded = flag.Bool("ibus", false, "Run the embeded ibus component")
 var standalone = flag.Bool("standalone", false, "Run standalone by creating new component")
 var generatexml = flag.String("xml", "", "Write xml representation of component to file or stdout if file == \"-\"")
+var prefs = flag.Bool("prefs", false, "Show preferences window")
 
 func makeComponent() *ibus.Component {
 
@@ -42,8 +48,8 @@ func makeComponent() *ibus.Component {
 		"ibus-varnam")
 
 	avroenginedesc := ibus.SmallEngineDesc(
-		"govarnam",
-		"GoVarnam", // TODO change to Varnam
+		engineCode,
+		engineName,
 		"GoVarnam Input Method",
 		"ml",
 		"AGPL-3.0",
@@ -115,6 +121,8 @@ func main() {
 		case <-c:
 		}
 
+	} else if *prefs {
+		showPrefs()
 	} else {
 		Usage()
 		os.Exit(1)

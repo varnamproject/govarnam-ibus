@@ -1,5 +1,16 @@
 package ibus
 
+/**
+ * goibus - golang implementation of libibus
+ * Copyright Sarim Khan, 2016
+ * Copyright Nguyen Tran Hau, 2021
+ * https://github.com/sarim/goibus
+ * Licensed under Mozilla Public License 1.1 ("MPL")
+ *
+ * Derivative Changes: Add new functions for lookup table modification
+ * Copyright Subin Siby, 2021
+ */
+
 import (
 	"github.com/godbus/dbus/v5"
 )
