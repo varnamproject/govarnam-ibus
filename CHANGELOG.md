@@ -1,6 +1,16 @@
 # CHANGELOG
 
-## v0.1.0 (2021-3-17)
+## v0.3.0 (2021-07-01)
+
+- Added preferences window
+- Varnam works with context now
+- Better performance
+
+## v0.2.0 (2021-06-02)
+
+- Implemented varnam
+
+## v0.1.0 (2021-03-17)
 
 ### Others
 

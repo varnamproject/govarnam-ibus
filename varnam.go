@@ -40,7 +40,7 @@ func makeComponent() *ibus.Component {
 	component := ibus.NewComponent(
 		"org.freedesktop.IBus.Varnam",
 		"GoVarnam Input Engine", // TODO change to Varnam
-		"0.2",
+		"0.3",
 		"AGPL-3.0",
 		"Subin Siby",
 		"https://subinsb.com/varnam",
@@ -56,8 +56,8 @@ func makeComponent() *ibus.Component {
 		"Subin Siby",
 		"/usr/local/share/varnam/ibus/icons/varnam.png",
 		"en",
-		"/usr/local/bin/govarnam-ibus -pref",
-		"0.2")
+		"/usr/local/bin/govarnam-ibus -prefs",
+		"0.3")
 
 	component.AddEngine(avroenginedesc)
 

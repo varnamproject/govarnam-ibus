@@ -1,5 +1,14 @@
 package main
 
+/**
+ * GoVarnam IBus Engine Preferences
+ * Copyright Subin Siby, 2021
+ * Licensed under AGPL-3.0
+ *
+ * For preferences to be applied, ibus
+ * need to be restarted: ibus restart
+ */
+
 import (
 	"encoding/json"
 	"fmt"
