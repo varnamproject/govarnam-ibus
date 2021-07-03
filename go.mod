@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/godbus/dbus/v5 v5.0.3
 	github.com/gotk3/gotk3 v0.6.0
+	github.com/mattn/go-pointer v0.0.1 // indirect
 	gitlab.com/subins2000/govarnam v0.0.0-00010101000000-000000000000
 )
 

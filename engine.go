@@ -3,15 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
 	"github.com/godbus/dbus/v5"
-	"gitlab.com/subins2000/govarnam/govarnam"
+	"github.com/mattn/go-pointer"
 )
-
-var handle *govarnam.Varnam
 
 type VarnamEngine struct {
 	ibus.Engine
@@ -38,7 +35,7 @@ func (e *VarnamEngine) VarnamClearState() {
 
 func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool {
 	if shouldLearn {
-		go handle.Learn(text.Text, 0)
+		go learnWordVarnam(text.Text)
 		// TODO error handle
 	}
 	e.CommitText(text)
@@ -53,7 +50,8 @@ func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 	default:
 		txt := string(e.preedit)
 
-		result := handle.TransliterateWithContext(ctx, string(e.preedit))
+		p := pointer.Save(&ctx)
+		result := transliterateWithContext(p, string(e.preedit))
 
 		// Don't update lookup table if the result is late and next suggestion lookup has begun
 		if txt != string(e.preedit) {
@@ -360,18 +358,13 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	// TODO add SetOrientation method
 	// engine.table.emitSignal("SetOrientation", ibus.IBUS_ORIENTATION_VERTICAL)
 
-	var err error
-	handle, err = govarnam.InitFromLang("ml")
-	if err != nil {
-		log.Fatal(err)
-	}
+	initVarnam("ml")
 
-	handle.Debug = *debug
+	debugVarnam(*debug)
 
 	configLocal := retrieveSavedConf()
 	if configLocal != nil {
-		handle.DictionarySuggestionsLimit = configLocal.DictionarySuggestionsLimit
-		handle.TokenizerSuggestionsLimit = configLocal.TokenizerSuggestionsLimit
+		setConfigVarnam(configLocal)
 	}
 
 	ibus.PublishEngine(conn, objectPath, engine)
