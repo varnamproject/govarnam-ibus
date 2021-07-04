@@ -7,7 +7,6 @@ import (
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
 	"github.com/godbus/dbus/v5"
-	"github.com/mattn/go-pointer"
 )
 
 type VarnamEngine struct {
@@ -43,15 +42,15 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 	return true
 }
 
-func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
+func (e *VarnamEngine) InternalUpdateTable(ctx *context.Context) {
 	select {
-	case <-ctx.Done():
+	case <-(*ctx).Done():
 		return
 	default:
 		txt := string(e.preedit)
 
-		p := pointer.Save(&ctx)
-		result := transliterateWithContext(p, string(e.preedit))
+		// p := pointer.Save(ctx)
+		result := transliterateWithContext(ctx, string(e.preedit))
 
 		// Don't update lookup table if the result is late and next suggestion lookup has begun
 		if txt != string(e.preedit) {
@@ -109,7 +108,7 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 	ctx, cancel := context.WithCancel(e.transliterateCTX)
 	e.updateTableCancel = cancel
 
-	go e.InternalUpdateTable(ctx)
+	go e.InternalUpdateTable(&ctx)
 }
 
 func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
