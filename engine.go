@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
 	"github.com/godbus/dbus/v5"
+	"gitlab.com/subins2000/govarnam/govarnamgo"
 )
+
+var varnam *govarnamgo.VarnamHandle
 
 type VarnamEngine struct {
 	ibus.Engine
@@ -34,7 +38,7 @@ func (e *VarnamEngine) VarnamClearState() {
 
 func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool {
 	if shouldLearn {
-		go learnWordVarnam(text.Text)
+		go varnam.Learn(text.Text, 0)
 		// TODO error handle
 	}
 	e.CommitText(text)
@@ -42,15 +46,17 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 	return true
 }
 
-func (e *VarnamEngine) InternalUpdateTable(ctx *context.Context) {
+func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 	select {
-	case <-(*ctx).Done():
+	case <-ctx.Done():
+		fmt.Println("cancel-1")
 		return
 	default:
 		txt := string(e.preedit)
 
-		// p := pointer.Save(ctx)
-		result := transliterateWithContext(ctx, string(e.preedit))
+		defer e.updateTableCancel()
+
+		result := varnam.Transliterate(ctx, string(e.preedit))
 
 		// Don't update lookup table if the result is late and next suggestion lookup has begun
 		if txt != string(e.preedit) {
@@ -108,7 +114,7 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 	ctx, cancel := context.WithCancel(e.transliterateCTX)
 	e.updateTableCancel = cancel
 
-	go e.InternalUpdateTable(&ctx)
+	go e.InternalUpdateTable(ctx)
 }
 
 func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
@@ -318,7 +324,6 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 }
 
 func (e *VarnamEngine) FocusIn() *dbus.Error {
-	fmt.Println("FocusIn")
 	e.RegisterProperties(e.propList)
 	return nil
 }
@@ -357,13 +362,17 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	// TODO add SetOrientation method
 	// engine.table.emitSignal("SetOrientation", ibus.IBUS_ORIENTATION_VERTICAL)
 
-	initVarnam("ml")
+	var err error
+	varnam, err = govarnamgo.InitFromID("ml")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	debugVarnam(*debug)
+	varnam.Debug(*debug)
 
 	configLocal := retrieveSavedConf()
 	if configLocal != nil {
-		setConfigVarnam(configLocal)
+		varnam.SetConfig(*configLocal)
 	}
 
 	ibus.PublishEngine(conn, objectPath, engine)

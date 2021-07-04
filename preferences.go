@@ -20,14 +20,8 @@ import (
 	"strings"
 
 	"github.com/gotk3/gotk3/gtk"
+	"gitlab.com/subins2000/govarnam/govarnamgo"
 )
-
-// Config configuration vars
-type Config struct {
-	DictionarySuggestionsLimit int
-	TokenizerSuggestionsLimit  int
-	TokenizerSuggestionsAlways bool
-}
 
 func getConfPath() string {
 	var (
@@ -84,16 +78,16 @@ func stripNonNumericChars(input *gtk.Entry) {
 	input.SetText(result.String())
 }
 
-func saveConf(config Config) {
+func saveConf(config govarnamgo.Config) {
 	jsonBytes, _ := json.Marshal(config)
 	err := ioutil.WriteFile(getConfPath(), jsonBytes, 0644)
 	checkError(err)
 }
 
-func retrieveSavedConf() *Config {
+func retrieveSavedConf() *govarnamgo.Config {
 	path := getConfPath()
 	if fileExists(path) {
-		var configLocal Config
+		var configLocal govarnamgo.Config
 		confFile, _ := ioutil.ReadFile(path)
 
 		if err := json.Unmarshal(confFile, &configLocal); err != nil {
@@ -107,7 +101,8 @@ func retrieveSavedConf() *Config {
 func showPrefs() {
 	gtk.Init(nil)
 
-	config := Config{5, 15, true}
+	config := govarnamgo.Config{IndicDigits: false, DictionarySuggestionsLimit: 5, TokenizerSuggestionsLimit: 10, TokenizerSuggestionsAlways: true}
+
 	configLocal := retrieveSavedConf()
 	if configLocal != nil {
 		config = *configLocal
