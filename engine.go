@@ -46,23 +46,20 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 	return true
 }
 
+func getVarnamResult(ctx context.Context, channel chan<- govarnamgo.TransliterationResult, word string) {
+	channel <- varnam.Transliterate(ctx, word)
+	close(channel)
+}
+
 func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
+	resultChannel := make(chan govarnamgo.TransliterationResult)
+
+	go getVarnamResult(ctx, resultChannel, string(e.preedit))
+
 	select {
 	case <-ctx.Done():
-		fmt.Println("cancel-1")
 		return
-	default:
-		txt := string(e.preedit)
-
-		defer e.updateTableCancel()
-
-		result := varnam.Transliterate(ctx, string(e.preedit))
-
-		// Don't update lookup table if the result is late and next suggestion lookup has begun
-		if txt != string(e.preedit) {
-			return
-		}
-
+	case result := <-resultChannel:
 		e.table.Clear()
 
 		for _, sug := range result.ExactMatch {
@@ -104,6 +101,7 @@ func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 func (e *VarnamEngine) VarnamUpdateLookupTable() {
 	if e.updateTableCancel != nil {
 		e.updateTableCancel()
+		e.updateTableCancel = nil
 	}
 
 	if len(e.preedit) == 0 {
@@ -114,7 +112,7 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 	ctx, cancel := context.WithCancel(e.transliterateCTX)
 	e.updateTableCancel = cancel
 
-	go e.InternalUpdateTable(ctx)
+	e.InternalUpdateTable(ctx)
 }
 
 func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
