@@ -173,7 +173,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 	}
 
 	switch keyval {
-	case ibus.IBUS_space:
+	case ibus.IBUS_Space:
 		text := e.GetCandidate()
 		if text == nil {
 			e.VarnamCommitText(ibus.NewText(string(e.preedit)+" "), false)
@@ -264,6 +264,22 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 				e.VarnamClearState()
 			}
 		}
+		return true, nil
+
+	case ibus.IBUS_Home, ibus.IBUS_KP_Home:
+		if len(e.preedit) == 0 {
+			return false, nil
+		}
+		e.cursorPos = 0
+		e.VarnamUpdatePreedit()
+		return true, nil
+
+	case ibus.IBUS_End, ibus.IBUS_KP_End:
+		if len(e.preedit) == 0 {
+			return false, nil
+		}
+		e.cursorPos = uint32(len(e.preedit))
+		e.VarnamUpdatePreedit()
 		return true, nil
 
 	case ibus.IBUS_0, ibus.IBUS_KP_0:

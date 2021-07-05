@@ -5,7 +5,7 @@ const (
 	IBUS_MOD1_MASK    = 1 << 3
 	IBUS_RELEASE_MASK = 1 << 30
 
-	IBUS_space     = 0x020
+	IBUS_Space     = 0x020
 	IBUS_Return    = 0xff0d
 	IBUS_Escape    = 0xff1b
 	IBUS_Left      = 0xff51
@@ -14,6 +14,8 @@ const (
 	IBUS_Down      = 0xff54
 	IBUS_BackSpace = 0xff08
 	IBUS_Delete    = 0xffff
+	IBUS_Home      = 0xFF50
+	IBUS_End       = 0xFF57
 
 	IBUS_0 = 0x030
 	IBUS_1 = 0x031
@@ -36,4 +38,7 @@ const (
 	IBUS_KP_7 = 0xffb7
 	IBUS_KP_8 = 0xffb8
 	IBUS_KP_9 = 0xffb9
+
+	IBUS_KP_Home = 0xFF95
+	IBUS_KP_End  = 0xFF9C
 )
