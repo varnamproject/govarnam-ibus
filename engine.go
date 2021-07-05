@@ -8,10 +8,10 @@ import (
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
 	"github.com/godbus/dbus/v5"
-	"gitlab.com/subins2000/govarnam/govarnam"
+	"gitlab.com/subins2000/govarnam/govarnamgo"
 )
 
-var handle *govarnam.Varnam
+var varnam *govarnamgo.VarnamHandle
 
 type VarnamEngine struct {
 	ibus.Engine
@@ -38,7 +38,7 @@ func (e *VarnamEngine) VarnamClearState() {
 
 func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool {
 	if shouldLearn {
-		go handle.Learn(text.Text, 0)
+		go varnam.Learn(text.Text, 0)
 		// TODO error handle
 	}
 	e.CommitText(text)
@@ -46,20 +46,20 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 	return true
 }
 
+func getVarnamResult(ctx context.Context, channel chan<- govarnamgo.TransliterationResult, word string) {
+	channel <- varnam.Transliterate(ctx, word)
+	close(channel)
+}
+
 func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
+	resultChannel := make(chan govarnamgo.TransliterationResult)
+
+	go getVarnamResult(ctx, resultChannel, string(e.preedit))
+
 	select {
 	case <-ctx.Done():
 		return
-	default:
-		txt := string(e.preedit)
-
-		result := handle.TransliterateWithContext(ctx, string(e.preedit))
-
-		// Don't update lookup table if the result is late and next suggestion lookup has begun
-		if txt != string(e.preedit) {
-			return
-		}
-
+	case result := <-resultChannel:
 		e.table.Clear()
 
 		for _, sug := range result.ExactMatch {
@@ -101,6 +101,7 @@ func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 func (e *VarnamEngine) VarnamUpdateLookupTable() {
 	if e.updateTableCancel != nil {
 		e.updateTableCancel()
+		e.updateTableCancel = nil
 	}
 
 	if len(e.preedit) == 0 {
@@ -111,7 +112,7 @@ func (e *VarnamEngine) VarnamUpdateLookupTable() {
 	ctx, cancel := context.WithCancel(e.transliterateCTX)
 	e.updateTableCancel = cancel
 
-	go e.InternalUpdateTable(ctx)
+	e.InternalUpdateTable(ctx)
 }
 
 func (e *VarnamEngine) GetCandidateAt(index uint32) *ibus.Text {
@@ -172,7 +173,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 	}
 
 	switch keyval {
-	case ibus.IBUS_space:
+	case ibus.IBUS_Space:
 		text := e.GetCandidate()
 		if text == nil {
 			e.VarnamCommitText(ibus.NewText(string(e.preedit)+" "), false)
@@ -265,6 +266,22 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		}
 		return true, nil
 
+	case ibus.IBUS_Home, ibus.IBUS_KP_Home:
+		if len(e.preedit) == 0 {
+			return false, nil
+		}
+		e.cursorPos = 0
+		e.VarnamUpdatePreedit()
+		return true, nil
+
+	case ibus.IBUS_End, ibus.IBUS_KP_End:
+		if len(e.preedit) == 0 {
+			return false, nil
+		}
+		e.cursorPos = uint32(len(e.preedit))
+		e.VarnamUpdatePreedit()
+		return true, nil
+
 	case ibus.IBUS_0, ibus.IBUS_KP_0:
 		// Commit the text itself
 		e.VarnamCommitText(ibus.NewText(string(e.preedit)), false)
@@ -321,7 +338,6 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 }
 
 func (e *VarnamEngine) FocusIn() *dbus.Error {
-	fmt.Println("FocusIn")
 	e.RegisterProperties(e.propList)
 	return nil
 }
@@ -361,17 +377,16 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	// engine.table.emitSignal("SetOrientation", ibus.IBUS_ORIENTATION_VERTICAL)
 
 	var err error
-	handle, err = govarnam.InitFromLang("ml")
+	varnam, err = govarnamgo.InitFromID("ml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	handle.Debug = *debug
+	varnam.Debug(*debug)
 
 	configLocal := retrieveSavedConf()
 	if configLocal != nil {
-		handle.DictionarySuggestionsLimit = configLocal.DictionarySuggestionsLimit
-		handle.TokenizerSuggestionsLimit = configLocal.TokenizerSuggestionsLimit
+		varnam.SetConfig(*configLocal)
 	}
 
 	ibus.PublishEngine(conn, objectPath, engine)
