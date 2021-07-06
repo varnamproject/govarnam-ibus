@@ -20,9 +20,8 @@ else
     sudo mkdir -p "@INSTALL_PREFIX@/share/varnam/ibus/icons"
     sudo cp "$SCRIPT_DIR/$ICON" "@INSTALL_PREFIX@/share/varnam/ibus/icons/"
     sudo cp "$SCRIPT_DIR/$XML" "@IBUS_COMPONENT_INSTALL_LOC@"
-    ibus restart
 
-    echo "Installation finished."
+    echo "Installation finished. Restart ibus to add new input method."
 
   elif [ "$1" = "uninstall" ]; then
     sudo rm "@INSTALL_PREFIX@/bin/govarnam-ibus"
