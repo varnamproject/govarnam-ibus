@@ -25,6 +25,8 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+var installPrefix = "/usr/local"
+
 // TODO change to Varnam
 const engineName = "GoVarnam"
 const engineCode = "govarnam"
@@ -33,6 +35,7 @@ var debug = flag.Bool("debug", false, "Enable debugging")
 var embeded = flag.Bool("ibus", false, "Run the embeded ibus component")
 var standalone = flag.Bool("standalone", false, "Run standalone by creating new component")
 var generatexml = flag.String("xml", "", "Write xml representation of component to file or stdout if file == \"-\"")
+var prefix = flag.String("prefix", "", "Prefix location")
 var prefs = flag.Bool("prefs", false, "Show preferences window")
 
 func makeComponent() *ibus.Component {
@@ -40,11 +43,11 @@ func makeComponent() *ibus.Component {
 	component := ibus.NewComponent(
 		"org.freedesktop.IBus.Varnam",
 		"GoVarnam Input Engine", // TODO change to Varnam
-		"0.3",
+		"1.0.0",
 		"AGPL-3.0",
 		"Subin Siby",
 		"https://subinsb.com/varnam",
-		"/usr/local/bin/govarnam-ibus -ibus",
+		installPrefix+"/bin/govarnam-ibus -ibus",
 		"ibus-varnam")
 
 	avroenginedesc := ibus.SmallEngineDesc(
@@ -54,10 +57,10 @@ func makeComponent() *ibus.Component {
 		"ml",
 		"AGPL-3.0",
 		"Subin Siby",
-		"/usr/local/share/varnam/ibus/icons/varnam.png",
+		installPrefix+"/share/varnam/ibus/icons/"+engineCode+".png",
 		"en",
-		"/usr/local/bin/govarnam-ibus -prefs",
-		"0.3")
+		installPrefix+"/bin/govarnam-ibus -prefs",
+		"1.0.0")
 
 	component.AddEngine(avroenginedesc)
 
@@ -82,6 +85,11 @@ func main() {
 	flag.Parse()
 
 	if *generatexml != "" {
+		if *prefix == "" {
+			log.Fatal("Install prefix location needed")
+		}
+		installPrefix = *prefix
+
 		c := makeComponent()
 
 		if *generatexml == "-" {

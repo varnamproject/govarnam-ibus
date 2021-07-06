@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# TODO change govarnam to varnam
+ICON="govarnam.png"
+XML="govarnam.xml"
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+if [[ "$EUID" != 0 ]]; then
+  echo "Run this script as root or with sudo"
+  exit
+fi
+
+if [ -z "$1" ]; then
+  echo "Specify install or uninstall"
+else
+  if [ "$1" = "install" ]; then
+    sudo cp "$SCRIPT_DIR/govarnam-ibus" "@INSTALL_PREFIX@/bin/govarnam-ibus"
+
+    sudo mkdir -p "@INSTALL_PREFIX@/share/varnam/ibus/icons"
+    sudo cp "$SCRIPT_DIR/$ICON" "@INSTALL_PREFIX@/share/varnam/ibus/icons/"
+    sudo cp "$SCRIPT_DIR/$XML" "@IBUS_COMPONENT_INSTALL_LOC@"
+    ibus restart
+
+    echo "Installation finished."
+
+  elif [ "$1" = "uninstall" ]; then
+    sudo rm "@INSTALL_PREFIX@/bin/govarnam-ibus"
+    sudo rm "@IBUS_COMPONENT_INSTALL_LOC@/$XML"
+    sudo rm "@INSTALL_PREFIX@/share/varnam/ibus/icons/$ICON"
+    sudo rmdir "@INSTALL_PREFIX@/share/varnam/ibus/icons"
+    sudo rmdir "@INSTALL_PREFIX@/share/varnam/ibus"
+    sudo rmdir "@INSTALL_PREFIX@/share/varnam"
+
+    echo "Uninstallation finished"
+  fi
+fi
