@@ -62,26 +62,24 @@ func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 	case result := <-resultChannel:
 		e.table.Clear()
 
-		for _, sug := range result.ExactMatch {
+		for _, sug := range result.ExactMatches {
 			e.table.AppendCandidate(sug.Word)
 		}
 
-		// POINTER1: If no dictionary results exist, show greedy first
-		if result.DictionaryResultCount == 0 {
-			for _, sug := range result.GreedyTokenized {
-				e.table.AppendCandidate(sug.Word)
-			}
-		}
-
-		for _, sug := range result.Suggestions {
+		for _, sug := range result.PatternDictionarySuggestions {
 			e.table.AppendCandidate(sug.Word)
 		}
 
-		// POINTER1: If dictionary results exist, show greedy last
-		if result.DictionaryResultCount > 0 {
-			for _, sug := range result.GreedyTokenized {
-				e.table.AppendCandidate(sug.Word)
-			}
+		for _, sug := range result.DictionarySuggestions {
+			e.table.AppendCandidate(sug.Word)
+		}
+
+		for _, sug := range result.GreedyTokenized {
+			e.table.AppendCandidate(sug.Word)
+		}
+
+		for _, sug := range result.TokenizerSuggestions {
+			e.table.AppendCandidate(sug.Word)
 		}
 
 		label := uint32(1)
