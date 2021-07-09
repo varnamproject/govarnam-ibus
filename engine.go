@@ -340,6 +340,11 @@ func (e *VarnamEngine) FocusIn() *dbus.Error {
 	return nil
 }
 
+func (e *VarnamEngine) FocusOut() *dbus.Error {
+	e.VarnamClearState()
+	return nil
+}
+
 func (e *VarnamEngine) PropertyActivate(prop_name string, prop_state uint32) *dbus.Error {
 	fmt.Println("PropertyActivate", prop_name)
 	return nil
