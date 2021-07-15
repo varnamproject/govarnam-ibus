@@ -28,8 +28,13 @@ import (
 var installPrefix = "/usr/local"
 
 // TODO change to Varnam
-const engineName = "GoVarnam"
-const engineCode = "govarnam"
+var engineName = "GoVarnam"
+var engineCode = "govarnam"
+var busName = "org.freedesktop.IBus.GoVarnam"
+
+var schemeIDFlag = flag.String("s", "", "Scheme ID")
+var engineLang = flag.String("lang", "", "Language")
+var schemeID = ""
 
 var debug = flag.Bool("debug", false, "Enable debugging")
 var embeded = flag.Bool("ibus", false, "Run the embeded ibus component")
@@ -39,27 +44,26 @@ var prefix = flag.String("prefix", "", "Prefix location")
 var prefs = flag.Bool("prefs", false, "Show preferences window")
 
 func makeComponent() *ibus.Component {
-
 	component := ibus.NewComponent(
-		"org.freedesktop.IBus.Varnam",
-		"GoVarnam Input Engine", // TODO change to Varnam
+		busName,
+		engineName+" Input Engine", // TODO change to Varnam
 		"1.0.0",
 		"AGPL-3.0",
 		"Subin Siby",
 		"https://subinsb.com/varnam",
-		installPrefix+"/bin/govarnam-ibus -ibus",
-		"ibus-varnam")
+		installPrefix+"/bin/govarnam-ibus -ibus -s "+schemeID+" -lang "+*engineLang,
+		"ibus-varnam-"+schemeID)
 
 	avroenginedesc := ibus.SmallEngineDesc(
 		engineCode,
 		engineName,
-		"GoVarnam Input Method",
-		"ml",
+		engineName+" Input Method",
+		*engineLang,
 		"AGPL-3.0",
 		"Subin Siby",
 		installPrefix+"/share/varnam/ibus/icons/"+engineCode+".png",
 		"en",
-		installPrefix+"/bin/govarnam-ibus -prefs",
+		installPrefix+"/bin/govarnam-ibus -prefs -s "+schemeID+" -lang "+*engineLang,
 		"1.0.0")
 
 	component.AddEngine(avroenginedesc)
@@ -83,6 +87,18 @@ func main() {
 	}
 
 	flag.Parse()
+
+	if *schemeIDFlag == "" {
+		log.Fatal("Need a scheme ID. Pass it to -s option")
+	}
+	if *engineLang == "" {
+		log.Fatal("Need a language identifier. Pass it to -lang option")
+	}
+
+	schemeID = *schemeIDFlag
+	engineName += "-" + schemeID
+	engineCode += "-" + schemeID
+	busName += "." + schemeID
 
 	if *generatexml != "" {
 		if *prefix == "" {
@@ -109,7 +125,7 @@ func main() {
 
 		conn := bus.GetDbusConn()
 		ibus.NewFactory(conn, VarnamEngineCreator)
-		bus.RequestName("org.freedesktop.IBus.Varnam", 0)
+		bus.RequestName(busName, 0)
 		select {}
 	} else if *standalone {
 		bus := ibus.NewBus()

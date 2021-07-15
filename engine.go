@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
 	"github.com/godbus/dbus/v5"
 	"gitlab.com/subins2000/govarnam/govarnamgo"
 )
+
+var inscriptMode = false
 
 var varnam *govarnamgo.VarnamHandle
 
@@ -143,7 +146,13 @@ func (e *VarnamEngine) VarnamCommitCandidateAt(index uint32) (bool, *dbus.Error)
 
 func isWordBreak(ukeyval uint32) bool {
 	keyval := int(ukeyval)
-	if keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 || keyval == 34 || keyval == 59 || keyval == 39 {
+	if keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 {
+		return true
+	}
+	// 59 is ;
+	// 39 is '
+	// 34 is "
+	if !inscriptMode && (keyval == 59 || keyval == 39 || keyval == 34) {
 		return true
 	}
 	return false
@@ -383,9 +392,13 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	// engine.table.emitSignal("SetOrientation", ibus.IBUS_ORIENTATION_VERTICAL)
 
 	var err error
-	varnam, err = govarnamgo.InitFromID("ml")
+	varnam, err = govarnamgo.InitFromID(schemeID)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if strings.Contains(schemeID, "inscript") {
+		inscriptMode = true
 	}
 
 	varnam.Debug(*debug)
