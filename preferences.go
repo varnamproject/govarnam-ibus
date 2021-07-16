@@ -98,10 +98,19 @@ func retrieveSavedConf() *govarnamgo.Config {
 	return nil
 }
 
+func getVarnamDefaultConfig() govarnamgo.Config {
+	config := govarnamgo.Config{IndicDigits: false, DictionarySuggestionsLimit: 5, TokenizerSuggestionsLimit: 10, TokenizerSuggestionsAlways: true}
+
+	if inscriptMode {
+		config.IndicDigits = true
+	}
+	return config
+}
+
 func showPrefs() {
 	gtk.Init(nil)
 
-	config := govarnamgo.Config{IndicDigits: false, DictionarySuggestionsLimit: 5, TokenizerSuggestionsLimit: 10, TokenizerSuggestionsAlways: true}
+	config := getVarnamDefaultConfig()
 
 	configLocal := retrieveSavedConf()
 	if configLocal != nil {

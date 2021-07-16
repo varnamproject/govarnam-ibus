@@ -15,7 +15,9 @@ install:
 	./install.sh
 
 ibus-xml:
-	./${BIN} -xml govarnam.xml -prefix ${INSTALL_PREFIX}
+	mkdir -p component
+	./${BIN} -s ml -lang ml -xml component/govarnam-ml.xml -prefix ${INSTALL_PREFIX}
+	./${BIN} -s ml-inscript -lang ml -xml component/govarnam-ml-inscript.xml -prefix ${INSTALL_PREFIX}
 
 build-ubuntu18:
 	go build -tags pango_1_42,gtk_3_22 -o ${BIN} .
@@ -28,10 +30,14 @@ build-ubuntu20:
 	$(MAKE) build-install-script
 
 release:
-	mkdir -p ${RELEASE_NAME}
+	mkdir -p ${RELEASE_NAME} ${RELEASE_NAME}/icons ${RELEASE_NAME}/component
 	cp ${BIN} ${RELEASE_NAME}/
 	cp install.sh ${RELEASE_NAME}/
-	cp *.png ${RELEASE_NAME}/
-	cp *.xml ${RELEASE_NAME}/
+	cp icons/*.png ${RELEASE_NAME}/icons/
+	cp component/*.xml ${RELEASE_NAME}/component
 
 	zip -r ${RELEASE_NAME}.zip ${RELEASE_NAME}/*
+
+clean:
+	rm "component/*.xml"
+	rmdir component
