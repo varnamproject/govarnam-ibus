@@ -19,6 +19,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
@@ -35,6 +36,8 @@ var busName = "org.freedesktop.IBus.GoVarnam"
 var schemeIDFlag = flag.String("s", "", "Scheme ID")
 var engineLang = flag.String("lang", "", "Language")
 var schemeID = ""
+
+var inscriptMode = false
 
 var debug = flag.Bool("debug", false, "Enable debugging")
 var embeded = flag.Bool("ibus", false, "Run the embeded ibus component")
@@ -99,6 +102,10 @@ func main() {
 	engineName += "-" + schemeID
 	engineCode += "-" + schemeID
 	busName += "." + schemeID
+
+	if strings.Contains(schemeID, "inscript") {
+		inscriptMode = true
+	}
 
 	if *generatexml != "" {
 		if *prefix == "" {

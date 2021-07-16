@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"gitlab.com/subins2000/govarnam-ibus/ibus"
 
@@ -12,7 +11,7 @@ import (
 	"gitlab.com/subins2000/govarnam/govarnamgo"
 )
 
-var inscriptMode = false
+var lastTypedCharacter = ""
 
 var varnam *govarnamgo.VarnamHandle
 
@@ -296,24 +295,55 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		// Commit the text itself
 		e.VarnamCommitText(ibus.NewText(string(e.preedit)), false)
 		return true, nil
+	}
+
+	numericKey := uint32(10)
+
+	switch keyval {
 	case ibus.IBUS_1, ibus.IBUS_KP_1:
-		return e.VarnamCommitCandidateAt(0)
+		numericKey = 0
+		break
 	case ibus.IBUS_2, ibus.IBUS_KP_2:
-		return e.VarnamCommitCandidateAt(1)
+		numericKey = 1
+		break
 	case ibus.IBUS_3, ibus.IBUS_KP_3:
-		return e.VarnamCommitCandidateAt(2)
+		numericKey = 3
+		break
 	case ibus.IBUS_4, ibus.IBUS_KP_4:
-		return e.VarnamCommitCandidateAt(3)
+		numericKey = 4
+		break
 	case ibus.IBUS_5, ibus.IBUS_KP_5:
-		return e.VarnamCommitCandidateAt(4)
+		numericKey = 5
+		break
 	case ibus.IBUS_6, ibus.IBUS_KP_6:
-		return e.VarnamCommitCandidateAt(5)
+		numericKey = 6
+		break
 	case ibus.IBUS_7, ibus.IBUS_KP_7:
-		return e.VarnamCommitCandidateAt(6)
+		numericKey = 7
+		break
 	case ibus.IBUS_8, ibus.IBUS_KP_8:
-		return e.VarnamCommitCandidateAt(7)
+		numericKey = 8
+		break
 	case ibus.IBUS_9, ibus.IBUS_KP_9:
-		return e.VarnamCommitCandidateAt(8)
+		numericKey = 9
+	}
+
+	if numericKey != 10 {
+		if inscriptMode {
+			// Inscript scheme uses ^1 to input ZWJ.
+			// In usual enhanced inscript AltGr + 1 is used to achieve the same.
+			// ^2 - ZWNJ
+			// ^4 - ₹
+			// Inscript scheme uses |number to input a native language numeral
+			// |1 - Language Numeral 1 - ൧
+			// |2 - Language Numeral 2 - ൨
+
+			if lastTypedCharacter != "^" && lastTypedCharacter != "|" {
+				return e.VarnamCommitCandidateAt(numericKey)
+			}
+		} else {
+			return e.VarnamCommitCandidateAt(numericKey)
+		}
 	}
 
 	if isWordBreak(keyval) {
@@ -337,6 +367,10 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		// Appending at cursor position
 		e.preedit = insertAtIndex(e.preedit, e.cursorPos, rune(keyval))
 		e.cursorPos++
+
+		if inscriptMode {
+			lastTypedCharacter = string(keyval)
+		}
 
 		e.VarnamUpdatePreedit()
 
@@ -397,14 +431,13 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 		log.Fatal(err)
 	}
 
-	if strings.Contains(schemeID, "inscript") {
-		inscriptMode = true
-	}
-
 	varnam.Debug(*debug)
 
 	configLocal := retrieveSavedConf()
-	if configLocal != nil {
+	if configLocal == nil {
+		// Default config
+		varnam.SetConfig(getVarnamDefaultConfig())
+	} else {
 		varnam.SetConfig(*configLocal)
 	}
 
