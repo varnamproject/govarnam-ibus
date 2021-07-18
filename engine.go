@@ -307,25 +307,25 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		numericKey = 1
 		break
 	case ibus.IBUS_3, ibus.IBUS_KP_3:
-		numericKey = 3
+		numericKey = 2
 		break
 	case ibus.IBUS_4, ibus.IBUS_KP_4:
-		numericKey = 4
+		numericKey = 3
 		break
 	case ibus.IBUS_5, ibus.IBUS_KP_5:
-		numericKey = 5
+		numericKey = 4
 		break
 	case ibus.IBUS_6, ibus.IBUS_KP_6:
-		numericKey = 6
+		numericKey = 5
 		break
 	case ibus.IBUS_7, ibus.IBUS_KP_7:
-		numericKey = 7
+		numericKey = 6
 		break
 	case ibus.IBUS_8, ibus.IBUS_KP_8:
-		numericKey = 8
+		numericKey = 7
 		break
 	case ibus.IBUS_9, ibus.IBUS_KP_9:
-		numericKey = 9
+		numericKey = 8
 	}
 
 	if numericKey != 10 {
