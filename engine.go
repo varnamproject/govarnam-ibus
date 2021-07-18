@@ -174,6 +174,16 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		if len(e.preedit) == 0 {
 			return false, nil
 		} else {
+			if keyval == ibus.IBUS_Delete {
+				if *debug {
+					fmt.Println("CTRL + DEL = Unlearn word")
+				}
+				text := e.GetCandidate()
+				if text != nil {
+					varnam.Unlearn(text.Text)
+					e.VarnamUpdateLookupTable()
+				}
+			}
 			return true, nil
 		}
 	}
