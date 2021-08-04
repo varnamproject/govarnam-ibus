@@ -406,6 +406,12 @@ func (e *VarnamEngine) PropertyActivate(prop_name string, prop_state uint32) *db
 	return nil
 }
 
+func (c *VarnamEngine) Destroy() *dbus.Error {
+	varnam.Close()
+	varnam = nil
+	return nil
+}
+
 var eid = 0
 
 func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
@@ -435,20 +441,22 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	// TODO add SetOrientation method
 	// engine.table.emitSignal("SetOrientation", ibus.IBUS_ORIENTATION_VERTICAL)
 
-	var err error
-	varnam, err = govarnamgo.InitFromID(schemeID)
-	if err != nil {
-		log.Fatal(err)
-	}
+	if varnam == nil {
+		var err error
+		varnam, err = govarnamgo.InitFromID(schemeID)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	varnam.Debug(*debug)
+		varnam.Debug(*debug)
 
-	configLocal := retrieveSavedConf()
-	if configLocal == nil {
-		// Default config
-		varnam.SetConfig(getVarnamDefaultConfig())
-	} else {
-		varnam.SetConfig(*configLocal)
+		configLocal := retrieveSavedConf()
+		if configLocal == nil {
+			// Default config
+			varnam.SetConfig(getVarnamDefaultConfig())
+		} else {
+			varnam.SetConfig(*configLocal)
+		}
 	}
 
 	ibus.PublishEngine(conn, objectPath, engine)
