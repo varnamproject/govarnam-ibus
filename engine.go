@@ -145,6 +145,12 @@ func (e *VarnamEngine) VarnamCommitCandidateAt(index uint32) (bool, *dbus.Error)
 
 func isWordBreak(ukeyval uint32) bool {
 	keyval := int(ukeyval)
+	// 46 is .
+	// 44 is ,
+	// 63 is ?
+	// 33 is !
+	// 40 is (
+	// 41 is )
 	if keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 {
 		return true
 	}
