@@ -1,0 +1,13 @@
+GoVarnam-ibus is a derivative of goibus. License :
+
+goibus - golang implementation of libibus by Sarim Khan
+
+Licensed under Mozilla Public License 1.1 ("MPL"), an open source/free software license.
+
+https://github.com/sarim/goibus
+
+govarnam-ibus - IBus Engine for GoVarnam library by Subin Siby
+
+Licensed under MPL-1.1
+
+You can see MPL-1.1 license terms here : https://spdx.org/licenses/MPL-1.1.html
