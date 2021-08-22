@@ -13,7 +13,7 @@ if [ -z "$1" ]; then
   echo "Specify install or uninstall"
 else
   if [ "$1" = "install" ]; then
-    sudo cp "$SCRIPT_DIR/govarnam-ibus" "@INSTALL_PREFIX@/bin/govarnam-ibus"
+    sudo cp "$SCRIPT_DIR/varnam-ibus-engine" "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
 
     sudo mkdir -p "@INSTALL_PREFIX@/share/varnam/ibus/icons"
     sudo cp "$SCRIPT_DIR/icons/"*.png "@INSTALL_PREFIX@/share/varnam/ibus/icons/"
@@ -22,7 +22,7 @@ else
     echo "Installation finished. Restart ibus to add new input method."
 
   elif [ "$1" = "uninstall" ]; then
-    sudo rm "@INSTALL_PREFIX@/bin/govarnam-ibus"
+    sudo rm "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
     for XML in $(find "$SCRIPT_DIR/component/"*.xml -printf "%f\n"); do
       sudo rm "@IBUS_COMPONENT_INSTALL_LOC@/$XML"
     done

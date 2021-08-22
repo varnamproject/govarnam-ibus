@@ -1,7 +1,7 @@
-BIN := govarnam-ibus
+BIN := varnam-ibus-engine
 INSTALL_PREFIX := /usr/local
 VERSION := $(shell git describe --abbrev=0 --tags | sed s/v//)
-RELEASE_NAME := govarnam-ibus-${VERSION}
+RELEASE_NAME := varnam-ibus-engine-${VERSION}
 IBUS_COMPONENT_INSTALL_LOC := "/usr/share/ibus/component"
 
 build-install-script:

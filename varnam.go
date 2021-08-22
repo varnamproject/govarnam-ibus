@@ -54,7 +54,7 @@ func makeComponent() *ibus.Component {
 		"AGPL-3.0",
 		"Subin Siby",
 		"https://subinsb.com/varnam",
-		installPrefix+"/bin/govarnam-ibus -ibus -s "+schemeID+" -lang "+*engineLang,
+		installPrefix+"/bin/varnam-ibus-engine -ibus -s "+schemeID+" -lang "+*engineLang,
 		"ibus-varnam-"+schemeID)
 
 	avroenginedesc := ibus.SmallEngineDesc(
@@ -66,7 +66,7 @@ func makeComponent() *ibus.Component {
 		"Subin Siby",
 		installPrefix+"/share/varnam/ibus/icons/"+engineCode+".png",
 		"en",
-		installPrefix+"/bin/govarnam-ibus -prefs -s "+schemeID+" -lang "+*engineLang,
+		installPrefix+"/bin/varnam-ibus-engine -prefs -s "+schemeID+" -lang "+*engineLang,
 		"1.0.0")
 
 	component.AddEngine(avroenginedesc)

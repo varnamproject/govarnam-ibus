@@ -1,10 +1,10 @@
-# IBus Engine For govarnam
+# IBus Engine For GoVarnam
 
 An easy way to type Indian languages on GNU/Linux systems.
 
 goibus - golang implementation of libibus
 
-Thanks to [sarim](https://github.com/sarim/goibus) and [haunt98](https://github.com/haunt98/goibus) for developing goibus from which `govarnam-ibus` is developed.
+Thanks to [sarim](https://github.com/sarim/goibus) and [haunt98](https://github.com/haunt98/goibus) for developing goibus from which this IBus engine is developed.
 
 ## Installation
 
@@ -53,8 +53,8 @@ go run . -standalone
 To use it system wide:
 ```
 go build .
-sudo ln -s $(realpath govarnam-ibus) /usr/local/bin/govarnam-ibus
-./govarnam-ibus -xml govarnam.xml
+sudo ln -s $(realpath varnam-ibus-engine) /usr/local/bin/varnam-ibus-engine
+./varnam-ibus-engine -xml govarnam.xml
 sudo ln -s $(realpath govarnam.xml) /usr/share/ibus/component/govarnam.xml
 
 # Copy icon
@@ -65,3 +65,5 @@ ibus restart
 ```
 
 Now, go to ibus settings to add the input method. Currently it's just for Malayalam.
+
+(Note that we use `varnam-ibus-engine` as executable name)
