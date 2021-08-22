@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	"gitlab.com/subins2000/govarnam-ibus/ibus"
+	"github.com/varnamproject/govarnam-ibus/ibus"
 
 	"github.com/godbus/dbus/v5"
 )

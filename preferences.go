@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/gotk3/gotk3/gtk"
-	"gitlab.com/subins2000/govarnam/govarnamgo"
+	"github.com/varnamproject/govarnam/govarnamgo"
 )
 
 func getConfPath() string {

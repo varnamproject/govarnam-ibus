@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	"gitlab.com/subins2000/govarnam-ibus/ibus"
+	"github.com/varnamproject/govarnam-ibus/ibus"
 
 	"github.com/godbus/dbus/v5"
-	"gitlab.com/subins2000/govarnam/govarnamgo"
+	"github.com/varnamproject/govarnam/govarnamgo"
 )
 
 var lastTypedCharacter = ""
