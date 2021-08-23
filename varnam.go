@@ -51,7 +51,7 @@ func makeComponent() *ibus.Component {
 	component := ibus.NewComponent(
 		busName,
 		engineName+" Input Engine",
-		"1.0.0",
+		"1.4.0",
 		"AGPL-3.0",
 		"Subin Siby",
 		"https://subinsb.com/varnam",
@@ -68,7 +68,7 @@ func makeComponent() *ibus.Component {
 		installPrefix+"/share/varnam/ibus/icons/"+engineCode+".png",
 		"en",
 		installPrefix+"/bin/varnam-ibus-engine -prefs -s "+schemeID+" -lang "+*engineLang,
-		"1.0.0")
+		"1.4.0")
 
 	component.AddEngine(avroenginedesc)
 
