@@ -99,7 +99,13 @@ func retrieveSavedConf() *govarnamgo.Config {
 }
 
 func getVarnamDefaultConfig() govarnamgo.Config {
-	config := govarnamgo.Config{IndicDigits: false, DictionarySuggestionsLimit: 5, TokenizerSuggestionsLimit: 10, TokenizerSuggestionsAlways: true}
+	config := govarnamgo.Config{
+		IndicDigits:                false,
+		DictionarySuggestionsLimit: 5,
+		TokenizerSuggestionsLimit:  10,
+		TokenizerSuggestionsAlways: true,
+		DictionaryMatchExact:       false,
+	}
 
 	if inscriptMode {
 		config.IndicDigits = true
@@ -159,7 +165,21 @@ func showPrefs() {
 	dictSugsSizeGrid.Add(dictSugsSizeLabel)
 	dictSugsSizeGrid.Add(dictSugsSizeInput)
 
-	/* Dictionary Suggestion Preference */
+	/* Dictionary Match Exact Preference */
+	dictMatchExactGrid := makeNewGrid()
+
+	dictMatchExactLabel, err := gtk.LabelNew("Strictly Follow Scheme For Dictionary Results")
+	checkError(err)
+
+	dictMatchExactCheck, err := gtk.CheckButtonNew()
+	checkError(err)
+
+	dictMatchExactCheck.SetActive(config.DictionaryMatchExact)
+
+	dictMatchExactGrid.Add(dictMatchExactLabel)
+	dictMatchExactGrid.Add(dictMatchExactCheck)
+
+	/* Tokenizer Suggestion Preference */
 	tokenizerSugsSizeGrid := makeNewGrid()
 
 	tokenizerSugsSizeLabel, err := gtk.LabelNew("Tokenizer Suggestions Limit")
@@ -176,6 +196,7 @@ func showPrefs() {
 	tokenizerSugsSizeGrid.Add(tokenizerSugsSizeInput)
 
 	gtkBox.Add(dictSugsSizeGrid)
+	gtkBox.Add(dictMatchExactGrid)
 	gtkBox.Add(tokenizerSugsSizeGrid)
 
 	dialog.AddButton("Save", gtk.RESPONSE_APPLY)
@@ -188,6 +209,8 @@ func showPrefs() {
 
 			i, _ := strconv.Atoi(text)
 			config.DictionarySuggestionsLimit = i
+
+			config.DictionaryMatchExact = dictMatchExactCheck.GetActive()
 
 			text, err = tokenizerSugsSizeInput.GetText()
 			checkError(err)
