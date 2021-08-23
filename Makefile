@@ -4,7 +4,7 @@ VERSION := $(shell git describe --abbrev=0 --tags | sed s/v//)
 RELEASE_NAME := varnam-ibus-engine-${VERSION}
 IBUS_COMPONENT_INSTALL_LOC := "/usr/share/ibus/component"
 
-build-install-script:
+install-script:
 	cp install.sh.in install.sh
 	sed -i "s#@INSTALL_PREFIX@#${INSTALL_PREFIX}#g" install.sh
 	sed -i "s#@IBUS_COMPONENT_INSTALL_LOC@#${IBUS_COMPONENT_INSTALL_LOC}#g" install.sh
@@ -14,20 +14,23 @@ build-install-script:
 install:
 	./install.sh
 
+ibus-xml: SHELL := /bin/bash
+ibus-xml: SCHEMES=("ml" "ta" "hi")
 ibus-xml:
 	mkdir -p component
-	./${BIN} -s ml -lang ml -xml component/govarnam-ml.xml -prefix ${INSTALL_PREFIX}
-	./${BIN} -s ml-inscript -lang ml -xml component/govarnam-ml-inscript.xml -prefix ${INSTALL_PREFIX}
+	./${BIN} -s ml-inscript -lang ml -xml component/varnam-ml-inscript.xml -prefix ${INSTALL_PREFIX}
 
-build-ubuntu18:
+	$(shell SCHEMES=("ml" "ta" "hi"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)
+
+ubuntu-18:
 	go build -tags pango_1_42,gtk_3_22 -o ${BIN} .
 	$(MAKE) ibus-xml
-	$(MAKE) build-install-script
+	$(MAKE) install-script
 
-build-ubuntu20:
+ubuntu-20:
 	go build -o ${BIN} .
 	$(MAKE) ibus-xml
-	$(MAKE) build-install-script
+	$(MAKE) install-script
 
 release:
 	mkdir -p ${RELEASE_NAME} ${RELEASE_NAME}/icons ${RELEASE_NAME}/component

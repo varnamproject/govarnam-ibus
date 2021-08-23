@@ -28,9 +28,10 @@ import (
 
 var installPrefix = "/usr/local"
 
-// TODO change to Varnam
-var engineName = "GoVarnam"
-var engineCode = "govarnam"
+var engineName = "Varnam"
+var engineCode = "varnam"
+
+// Bus name related to the engine used which is govarnam
 var busName = "org.freedesktop.IBus.GoVarnam"
 
 var schemeIDFlag = flag.String("s", "", "Scheme ID")
@@ -49,7 +50,7 @@ var prefs = flag.Bool("prefs", false, "Show preferences window")
 func makeComponent() *ibus.Component {
 	component := ibus.NewComponent(
 		busName,
-		engineName+" Input Engine", // TODO change to Varnam
+		engineName+" Input Engine",
 		"1.0.0",
 		"AGPL-3.0",
 		"Subin Siby",
