@@ -15,12 +15,11 @@ install:
 	./install.sh
 
 ibus-xml: SHELL := /bin/bash
-ibus-xml: SCHEMES=("ml" "ta" "hi")
 ibus-xml:
 	mkdir -p component
 	./${BIN} -s ml-inscript -lang ml -xml component/varnam-ml-inscript.xml -prefix ${INSTALL_PREFIX}
 
-	$(shell SCHEMES=("ml" "ta" "hi"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)
+	$(shell SCHEMES=("ml" "ta" "hi" "te" "ka" "bn"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)
 
 ubuntu-18:
 	go build -tags pango_1_42,gtk_3_22 -o ${BIN} .
