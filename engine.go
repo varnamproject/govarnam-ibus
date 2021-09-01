@@ -48,13 +48,16 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 	return true
 }
 
-func getVarnamResult(ctx context.Context, channel chan<- govarnamgo.TransliterationResult, word string) {
-	channel <- varnam.Transliterate(ctx, word)
+func getVarnamResult(ctx context.Context, channel chan<- []govarnamgo.Suggestion, word string) {
+	result, err := varnam.Transliterate(ctx, word)
+	if err == nil {
+		channel <- result
+	}
 	close(channel)
 }
 
 func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
-	resultChannel := make(chan govarnamgo.TransliterationResult)
+	resultChannel := make(chan []govarnamgo.Suggestion)
 
 	go getVarnamResult(ctx, resultChannel, string(e.preedit))
 
@@ -64,23 +67,7 @@ func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 	case result := <-resultChannel:
 		e.table.Clear()
 
-		for _, sug := range result.ExactMatches {
-			e.table.AppendCandidate(sug.Word)
-		}
-
-		for _, sug := range result.PatternDictionarySuggestions {
-			e.table.AppendCandidate(sug.Word)
-		}
-
-		for _, sug := range result.DictionarySuggestions {
-			e.table.AppendCandidate(sug.Word)
-		}
-
-		for _, sug := range result.GreedyTokenized {
-			e.table.AppendCandidate(sug.Word)
-		}
-
-		for _, sug := range result.TokenizerSuggestions {
+		for _, sug := range result {
 			e.table.AppendCandidate(sug.Word)
 		}
 
