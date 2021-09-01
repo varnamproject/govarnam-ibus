@@ -206,7 +206,7 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 			return false, nil
 		}
 		e.VarnamCommitText(ibus.NewText(string(e.preedit)), false)
-		return false, nil
+		return true, nil
 
 	case ibus.IBUS_Left:
 		if len(e.preedit) == 0 {
