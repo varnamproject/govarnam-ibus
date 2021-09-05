@@ -179,6 +179,7 @@ func makeSettingsPage() *gtk.Box {
 	saveButton, err := gtk.ButtonNewWithLabel("Save")
 	checkError(err)
 
+	var savedMessage *gtk.Label
 	saveButton.Connect("clicked", func(btn *gtk.Button) {
 		text, err := dictSugsSizeInput.GetText()
 		checkError(err)
@@ -196,7 +197,13 @@ func makeSettingsPage() *gtk.Box {
 
 		saveConf(config)
 
-		// Show restart
+		if savedMessage == nil {
+			savedMessage, err = gtk.LabelNew("Saved. Restart ibus for changes to take effect")
+			checkError(err)
+
+			settingsPage.Add(savedMessage)
+			savedMessage.Show()
+		}
 	})
 
 	actionButtons.PackEnd(saveButton, true, true, 10)
@@ -248,7 +255,7 @@ func refreshRLWList(list *gtk.ListBox) {
 		wordLabel.SetSelectable(true)
 
 		box.PackStart(timeLabel, false, false, 0)
-		box.PackStart(wordLabel, true, false, 0)
+		box.PackStart(wordLabel, true, true, 0)
 
 		unlearnButton, err := gtk.ButtonNewWithLabel("Unlearn")
 		unlearnButton.Connect("clicked", func() {
