@@ -10,6 +10,7 @@ package main
  */
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,6 +19,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/varnamproject/govarnam/govarnamgo"
@@ -55,7 +57,7 @@ func checkError(err error) {
 	}
 }
 
-func makeNewGrid() *gtk.Grid {
+func makeNewHorizontalGrid() *gtk.Grid {
 	grid, err := gtk.GridNew()
 	checkError(err)
 	grid.SetMarginTop(12)
@@ -113,44 +115,20 @@ func getVarnamDefaultConfig() govarnamgo.Config {
 	return config
 }
 
-func showPrefs() {
-	gtk.Init(nil)
+var config govarnamgo.Config
 
-	config := getVarnamDefaultConfig()
+func makeSettingsPage() *gtk.Box {
+	/* Page 1 - Settings */
 
-	configLocal := retrieveSavedConf()
-	if configLocal != nil {
-		config = *configLocal
-	}
-
-	// Create a new toplevel window, set its title, and connect it to the
-	// "destroy" signal to exit the GTK main loop when it is destroyed.
-	win, err := gtk.WindowNew(gtk.WINDOW_POPUP)
-	if err != nil {
-		log.Fatal("Unable to create window:", err)
-	}
-	win.SetPosition(gtk.WIN_POS_CENTER)
-	win.SetTitle(engineName + " Preferences")
-	win.Connect("destroy", func() {
-		gtk.MainQuit()
-	})
-
-	dialog, err := gtk.DialogNew()
-	dialog.SetTitle(engineName + " Preferences")
-	dialog.SetTransientFor(win)
-	dialog.Connect("destroy", func() {
-		gtk.MainQuit()
-	})
-
-	gtkBox, err := dialog.GetContentArea()
+	settingsPage, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 6)
 	checkError(err)
 
-	gtkBox.SetMarginStart(12)
-	gtkBox.SetMarginEnd(12)
-	gtkBox.SetMarginBottom(12)
+	settingsPage.SetMarginStart(12)
+	settingsPage.SetMarginEnd(12)
+	settingsPage.SetMarginBottom(12)
 
 	/* Dictionary Suggestion Preference */
-	dictSugsSizeGrid := makeNewGrid()
+	dictSugsSizeGrid := makeNewHorizontalGrid()
 
 	dictSugsSizeLabel, err := gtk.LabelNew("Dictionary Suggestions Limit")
 	checkError(err)
@@ -166,7 +144,7 @@ func showPrefs() {
 	dictSugsSizeGrid.Add(dictSugsSizeInput)
 
 	/* Dictionary Match Exact Preference */
-	dictMatchExactGrid := makeNewGrid()
+	dictMatchExactGrid := makeNewHorizontalGrid()
 
 	dictMatchExactLabel, err := gtk.LabelNew("Strictly Follow Scheme For Dictionary Results")
 	checkError(err)
@@ -180,7 +158,7 @@ func showPrefs() {
 	dictMatchExactGrid.Add(dictMatchExactCheck)
 
 	/* Tokenizer Suggestion Preference */
-	tokenizerSugsSizeGrid := makeNewGrid()
+	tokenizerSugsSizeGrid := makeNewHorizontalGrid()
 
 	tokenizerSugsSizeLabel, err := gtk.LabelNew("Tokenizer Suggestions Limit")
 	checkError(err)
@@ -195,37 +173,191 @@ func showPrefs() {
 	tokenizerSugsSizeGrid.Add(tokenizerSugsSizeLabel)
 	tokenizerSugsSizeGrid.Add(tokenizerSugsSizeInput)
 
-	gtkBox.Add(dictSugsSizeGrid)
-	gtkBox.Add(dictMatchExactGrid)
-	gtkBox.Add(tokenizerSugsSizeGrid)
+	actionButtons, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
+	checkError(err)
 
-	dialog.AddButton("Save", gtk.RESPONSE_APPLY)
-	dialog.AddButton("Cancel", gtk.RESPONSE_CANCEL)
+	saveButton, err := gtk.ButtonNewWithLabel("Save")
+	checkError(err)
 
-	dialog.Connect("response", func(d *gtk.Dialog, response gtk.ResponseType) {
-		if response == gtk.RESPONSE_APPLY {
-			text, err := dictSugsSizeInput.GetText()
+	var savedMessage *gtk.Label
+	saveButton.Connect("clicked", func(btn *gtk.Button) {
+		text, err := dictSugsSizeInput.GetText()
+		checkError(err)
+
+		i, _ := strconv.Atoi(text)
+		config.DictionarySuggestionsLimit = i
+
+		config.DictionaryMatchExact = dictMatchExactCheck.GetActive()
+
+		text, err = tokenizerSugsSizeInput.GetText()
+		checkError(err)
+
+		i, _ = strconv.Atoi(text)
+		config.TokenizerSuggestionsLimit = i
+
+		saveConf(config)
+
+		if savedMessage == nil {
+			savedMessage, err = gtk.LabelNew("Saved. Restart ibus for changes to take effect")
 			checkError(err)
 
-			i, _ := strconv.Atoi(text)
-			config.DictionarySuggestionsLimit = i
-
-			config.DictionaryMatchExact = dictMatchExactCheck.GetActive()
-
-			text, err = tokenizerSugsSizeInput.GetText()
-			checkError(err)
-
-			i, _ = strconv.Atoi(text)
-			config.TokenizerSuggestionsLimit = i
-
-			saveConf(config)
+			settingsPage.Add(savedMessage)
+			savedMessage.Show()
 		}
+	})
+
+	actionButtons.PackEnd(saveButton, true, true, 10)
+
+	settingsPage.Add(dictSugsSizeGrid)
+	settingsPage.Add(dictMatchExactGrid)
+	settingsPage.Add(tokenizerSugsSizeGrid)
+	settingsPage.Add(actionButtons)
+
+	return settingsPage
+}
+
+func refreshRLWList(list *gtk.ListBox) {
+	words, err := varnam.GetRecentlyLearntWords(context.Background(), 30)
+	if err != nil {
+		return
+	}
+
+	// Clear rows
+	for {
+		row := list.GetRowAtIndex(0)
+		if row == nil {
+			break
+		}
+		row.Destroy()
+	}
+
+	if *debug {
+		log.Println(words)
+	}
+
+	for _, wordInfo := range words {
+		word := wordInfo.Word
+
+		row, err := gtk.ListBoxRowNew()
+		checkError(err)
+
+		box, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
+		checkError(err)
+
+		timeLabel, err := gtk.LabelNew(
+			time.Unix(int64(wordInfo.LearnedOn), 0).String(),
+		)
+		checkError(err)
+		timeLabel.SetSelectable(true)
+
+		wordLabel, err := gtk.LabelNew(word)
+		checkError(err)
+		wordLabel.SetSelectable(true)
+
+		box.PackStart(timeLabel, false, false, 0)
+		box.PackStart(wordLabel, true, true, 0)
+
+		unlearnButton, err := gtk.ButtonNewWithLabel("Unlearn")
+		unlearnButton.Connect("clicked", func() {
+			err := varnam.Unlearn(word)
+			log.Println(err)
+			refreshRLWList(list)
+		})
+
+		box.PackEnd(unlearnButton, false, true, 0)
+
+		row.Add(box)
+		list.Add(row)
+	}
+
+	list.ShowAll()
+}
+
+func makeRLWPage() *gtk.Box {
+	/* Page 2 - Recently Learned Words */
+
+	rlwPage, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 6)
+	checkError(err)
+
+	rlwPage.SetMarginStart(12)
+	rlwPage.SetMarginEnd(12)
+	rlwPage.SetMarginBottom(12)
+
+	list, err := gtk.ListBoxNew()
+	checkError(err)
+	list.SetSelectionMode(gtk.SELECTION_NONE)
+
+	refreshRLWList(list)
+	rlwPage.Add(list)
+
+	return rlwPage
+}
+
+func showPrefs() {
+	gtk.Init(nil)
+
+	config = getVarnamDefaultConfig()
+
+	configLocal := retrieveSavedConf()
+	if configLocal != nil {
+		config = *configLocal
+	}
+
+	// Create a new toplevel window, set its title, and connect it to the
+	// "destroy" signal to exit the GTK main loop when it is destroyed.
+	mainWin, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+	if err != nil {
+		log.Fatal("Unable to create window:", err)
+	}
+
+	win, err := gtk.ScrolledWindowNew(nil, nil)
+	checkError(err)
+
+	mainWin.Add(win)
+
+	varnam, err = govarnamgo.InitFromID(schemeID)
+	if err != nil {
+		dialog := gtk.MessageDialogNew(mainWin, 0, gtk.MESSAGE_INFO, gtk.BUTTONS_OK, "Varnam Error: "+err.Error())
+		dialog.Run()
+		return
+	}
+
+	mainWin.SetDefaultSize(640, 480)
+	mainWin.SetResizable(false)
+	mainWin.SetPosition(gtk.WIN_POS_CENTER)
+	mainWin.SetTitle("Varnam " + varnam.GetSchemeDetails().DisplayName + " Preferences (" + engineName + ")")
+	mainWin.Connect("destroy", func() {
 		gtk.MainQuit()
 	})
 
-	dialog.SetDefaultSize(100, 150)
+	notebook, err := gtk.NotebookNew()
+	checkError(err)
+
+	notebook.SetScrollable(true)
+
+	notebook.SetMarginStart(12)
+	notebook.SetMarginEnd(12)
+	notebook.SetMarginBottom(12)
+
+	settingsLabel, err := gtk.LabelNew("Settings")
+	checkError(err)
+	notebook.AppendPage(makeSettingsPage(), settingsLabel)
+
+	rlwLabel, err := gtk.LabelNew("Recently Learnt Words")
+	checkError(err)
+	notebook.AppendPage(makeRLWPage(), rlwLabel)
+
+	win.Add(notebook)
+
+	settingsPage, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 6)
+	checkError(err)
+
+	settingsPage.SetMarginStart(12)
+	settingsPage.SetMarginEnd(12)
+	settingsPage.SetMarginBottom(12)
+
 	// Recursively show all widgets contained in this window.
-	dialog.ShowAll()
+	mainWin.ShowAll()
 
 	// Begin executing the GTK main loop.  This blocks until
 	// gtk.MainQuit() is run.
