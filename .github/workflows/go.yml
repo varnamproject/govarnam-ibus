@@ -1,0 +1,42 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-18.04
+    env:
+      VARNAM_UPSTREAM: https://varnam.subinsb.com
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      
+      - name: Build GoVarnam
+        run: |
+          cd ../
+          git clone https://github.com/varnamproject/govarnam.git govarnam
+          cd govarnam
+          make
+          sudo make install
+
+      - name: Build GoVarnam-IBus Engine
+        run: |
+          sudo apt install libgtk-3-dev libcairo2-dev libglib2.0-dev
+          make ubuntu-18
+          make release
+      
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: varnam-ibus-engine
+          path: "*.zip"

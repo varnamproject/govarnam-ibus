@@ -1,7 +1,7 @@
 BIN := varnam-ibus-engine
 INSTALL_PREFIX := /usr/local
-VERSION := $(shell git describe --abbrev=0 --tags | sed s/v//)
-RELEASE_NAME := varnam-ibus-engine-${VERSION}
+VERSION := $(shell echo $$(git describe --abbrev=0 --tags || echo "latest") | sed s/v//)
+RELEASE_NAME := varnam-ibus-engine-${VERSION}-${shell arch}
 IBUS_COMPONENT_INSTALL_LOC := "/usr/share/ibus/component"
 
 install-script:
@@ -16,7 +16,7 @@ install:
 
 ibus-xml: SHELL := /bin/bash
 ibus-xml:
-	mkdir -p component
+	$(shell mkdir component)
 	./${BIN} -s ml-inscript -lang ml -xml component/varnam-ml-inscript.xml -prefix ${INSTALL_PREFIX}
 
 	$(shell SCHEMES=("ml" "ta" "hi" "te" "ka" "bn"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)

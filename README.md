@@ -30,20 +30,21 @@ sudo ./install.sh uninstall
 
 ## Development
 
-## Building
+### Building
 
-For Ubuntu 18.04 & others with old GTK versions, special build params are required:
+For Ubuntu 18.04 & others with old GTK versions, [special build params](https://github.com/gotk3/gotk3/issues/693) are required:
 ```
 go build -tags pango_1_42,gtk_3_22 .
 ```
+You can achieve the above with `make ubuntu-18`. This build will be **usable in majority of GNU/Linux distributions**.
 
-For others, simply do :
-
+You can also compile with latest GTK version with :
 ```bash
 go build .
 ```
+or `make ubuntu-20`
 
-## Setup
+### Setup
 
 To just try it out:
 ```
@@ -52,7 +53,7 @@ go run . -standalone
 
 To use it system wide:
 ```
-go build .
+make ubuntu-18
 sudo ln -s $(realpath varnam-ibus-engine) /usr/local/bin/varnam-ibus-engine
 ./varnam-ibus-engine -xml govarnam.xml
 sudo ln -s $(realpath govarnam.xml) /usr/share/ibus/component/govarnam.xml
