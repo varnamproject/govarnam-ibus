@@ -281,6 +281,7 @@ func makeRLWPage() *gtk.Box {
 
 	rlwPage.SetMarginStart(12)
 	rlwPage.SetMarginEnd(12)
+	rlwPage.SetMarginTop(12)
 	rlwPage.SetMarginBottom(12)
 
 	list, err := gtk.ListBoxNew()
