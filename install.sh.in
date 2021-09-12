@@ -4,35 +4,29 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-if [[ "$EUID" != 0 ]]; then
-  echo "Run this script as root or with sudo"
-  exit
-fi
+ARG1=${1:-install}
 
-if [ -z "$1" ]; then
-  echo "Specify install or uninstall"
-else
-  if [ "$1" = "install" ]; then
-    sudo cp "$SCRIPT_DIR/varnam-ibus-engine" "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
+if [ "$ARG1" == "install" ]; then
+  sudo cp "$SCRIPT_DIR/varnam-ibus-engine" "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
 
-    sudo mkdir -p "@INSTALL_PREFIX@/share/varnam/ibus/icons"
-    sudo cp "$SCRIPT_DIR/icons/"*.png "@INSTALL_PREFIX@/share/varnam/ibus/icons/"
-    sudo cp "$SCRIPT_DIR/component/"*.xml "@IBUS_COMPONENT_INSTALL_LOC@"
+  sudo mkdir -p "@INSTALL_PREFIX@/share/varnam/ibus/icons"
+  sudo cp "$SCRIPT_DIR/icons/"*.png "@INSTALL_PREFIX@/share/varnam/ibus/icons/"
+  sudo cp "$SCRIPT_DIR/component/"*.xml "@IBUS_COMPONENT_INSTALL_LOC@"
 
-    echo "Installation finished. Restart ibus to add new input method."
+  msg="Installation finished. Restart ibus to add new input method."
+  echo "$msg"
+  notify-send "$msg" || true
+elif [ "$ARG1" == "uninstall" ]; then
+  sudo rm "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
+  for XML in $(find "$SCRIPT_DIR/component/"*.xml -printf "%f\n"); do
+    sudo rm "@IBUS_COMPONENT_INSTALL_LOC@/$XML"
+  done
+  for ICON in $(find "$SCRIPT_DIR/icons/"*.png -printf "%f\n"); do
+    sudo rm "@INSTALL_PREFIX@/share/varnam/ibus/icons/$ICON"
+  done
+  sudo rmdir "@INSTALL_PREFIX@/share/varnam/ibus/icons"
+  sudo rmdir "@INSTALL_PREFIX@/share/varnam/ibus"
+  sudo rmdir "@INSTALL_PREFIX@/share/varnam"
 
-  elif [ "$1" = "uninstall" ]; then
-    sudo rm "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
-    for XML in $(find "$SCRIPT_DIR/component/"*.xml -printf "%f\n"); do
-      sudo rm "@IBUS_COMPONENT_INSTALL_LOC@/$XML"
-    done
-    for ICON in $(find "$SCRIPT_DIR/icons/"*.png -printf "%f\n"); do
-      sudo rm "@INSTALL_PREFIX@/share/varnam/ibus/icons/$ICON"
-    done
-    sudo rmdir "@INSTALL_PREFIX@/share/varnam/ibus/icons"
-    sudo rmdir "@INSTALL_PREFIX@/share/varnam/ibus"
-    sudo rmdir "@INSTALL_PREFIX@/share/varnam"
-
-    echo "Uninstallation finished"
-  fi
+  echo "Uninstallation finished"
 fi
