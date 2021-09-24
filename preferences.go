@@ -102,11 +102,12 @@ func retrieveSavedConf() *govarnamgo.Config {
 
 func getVarnamDefaultConfig() govarnamgo.Config {
 	config := govarnamgo.Config{
-		IndicDigits:                false,
-		DictionarySuggestionsLimit: 5,
-		TokenizerSuggestionsLimit:  10,
-		TokenizerSuggestionsAlways: true,
-		DictionaryMatchExact:       false,
+		IndicDigits:                       false,
+		DictionarySuggestionsLimit:        4,
+		PatternDictionarySuggestionsLimit: 3,
+		TokenizerSuggestionsLimit:         10,
+		TokenizerSuggestionsAlways:        true,
+		DictionaryMatchExact:              false,
 	}
 
 	if inscriptMode {
@@ -127,6 +128,31 @@ func makeSettingsPage() *gtk.Box {
 	settingsPage.SetMarginEnd(12)
 	settingsPage.SetMarginBottom(12)
 
+	/* Dictionary Match Exact Preference */
+	dictMatchExactGrid := makeNewHorizontalGrid()
+
+	dictMatchExactLabel, err := gtk.LabelNew("Strictly Follow Scheme For Dictionary Results")
+	checkError(err)
+
+	dictMatchExactCheck, err := gtk.CheckButtonNew()
+	checkError(err)
+
+	dictMatchExactCheck.SetActive(config.DictionaryMatchExact)
+
+	dictMatchExactGrid.Add(dictMatchExactLabel)
+	dictMatchExactGrid.Add(dictMatchExactCheck)
+
+	/* Dictionary Match Exact Information */
+	dictMatchExactInfoGrid := makeNewHorizontalGrid()
+
+	dictMatchExactInfoLabel, err := gtk.LabelNew("")
+	checkError(err)
+
+	dictMatchExactInfoLabel.SetMarkup("If this ^ is turned on then suggestions will be more accurate according to <a href='" + upstreamURL + "/editor/#/scheme'>scheme</a>. But you will need to learn the <a href='" + upstreamURL + "/editor/#/scheme'>language scheme</a> thoroughly for the best experience.")
+	dictMatchExactInfoLabel.SetLineWrap(true)
+
+	dictMatchExactInfoGrid.Add(dictMatchExactInfoLabel)
+
 	/* Dictionary Suggestion Preference */
 	dictSugsSizeGrid := makeNewHorizontalGrid()
 
@@ -143,19 +169,21 @@ func makeSettingsPage() *gtk.Box {
 	dictSugsSizeGrid.Add(dictSugsSizeLabel)
 	dictSugsSizeGrid.Add(dictSugsSizeInput)
 
-	/* Dictionary Match Exact Preference */
-	dictMatchExactGrid := makeNewHorizontalGrid()
+	/* Pattern Dictionary Suggestion Preference */
+	patternDictSugsSizeGrid := makeNewHorizontalGrid()
 
-	dictMatchExactLabel, err := gtk.LabelNew("Strictly Follow Scheme For Dictionary Results")
+	patternDictSugsSizeLabel, err := gtk.LabelNew("Pattern Dictionary Suggestions Limit")
 	checkError(err)
 
-	dictMatchExactCheck, err := gtk.CheckButtonNew()
+	patternDictSugsSizeInput, err := gtk.EntryNew()
 	checkError(err)
 
-	dictMatchExactCheck.SetActive(config.DictionaryMatchExact)
+	patternDictSugsSizeInput.SetInputPurpose(gtk.INPUT_PURPOSE_DIGITS)
+	patternDictSugsSizeInput.Connect("changed", stripNonNumericChars)
+	patternDictSugsSizeInput.SetText(fmt.Sprint(config.PatternDictionarySuggestionsLimit))
 
-	dictMatchExactGrid.Add(dictMatchExactLabel)
-	dictMatchExactGrid.Add(dictMatchExactCheck)
+	patternDictSugsSizeGrid.Add(patternDictSugsSizeLabel)
+	patternDictSugsSizeGrid.Add(patternDictSugsSizeInput)
 
 	/* Tokenizer Suggestion Preference */
 	tokenizerSugsSizeGrid := makeNewHorizontalGrid()
@@ -208,8 +236,11 @@ func makeSettingsPage() *gtk.Box {
 
 	actionButtons.PackEnd(saveButton, true, true, 10)
 
-	settingsPage.Add(dictSugsSizeGrid)
 	settingsPage.Add(dictMatchExactGrid)
+	settingsPage.Add(dictMatchExactInfoGrid)
+
+	settingsPage.Add(dictSugsSizeGrid)
+	settingsPage.Add(patternDictSugsSizeGrid)
 	settingsPage.Add(tokenizerSugsSizeGrid)
 	settingsPage.Add(actionButtons)
 

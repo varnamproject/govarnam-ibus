@@ -31,6 +31,8 @@ var installPrefix = "/usr/local"
 var engineName = "Varnam"
 var engineCode = "varnam"
 
+var upstreamURL = "https://varnamproject.github.io"
+
 // Bus name related to the engine used which is govarnam
 var busName = "org.freedesktop.IBus.GoVarnam"
 
@@ -54,7 +56,7 @@ func makeComponent() *ibus.Component {
 		"1.4.0",
 		"AGPL-3.0",
 		"Subin Siby",
-		"https://subinsb.com/varnam",
+		upstreamURL,
 		installPrefix+"/bin/varnam-ibus-engine -ibus -s "+schemeID+" -lang "+*engineLang,
 		"ibus-varnam-"+schemeID)
 
