@@ -8,34 +8,17 @@ Thanks to [sarim](https://github.com/sarim/goibus) and [haunt98](https://github.
 
 ## Installation
 
-* Install and setup [IBus](https://wiki.archlinux.org/title/IBus)
-* Install [GoVarnam](https://github.com/varnamproject/govarnam)
-* Download the [latest release](https://github.com/varnamproject/govarnam-ibus/releases)
-* Extract the zip file
-* Open the extracted folder
-* Now we need to run the install script
-  * Double click `install.sh`, and choose "Run In Terminal"
-  * Or for KDE, Right click, choose "Run In Konsole"
-  * Or right click on folder, choose "Open In Terminal", type this and press enter:
-  ```bash
-  ./install.sh
-  ```
-* Type your password and press enter
-* Restart ibus (no sudo)
-```bash
-ibus restart
-```
-* Go to IBus settings, add Varnam input method.
-* Maybe set an easy to use switch key to switch between languages (Default is `Meta Key (Windows Key) + Space`)
-
-To uninstall:
-```
-sudo ./install.sh uninstall
-```
+See instructions in website: https://varnamproject.github.io/download/linux
 
 ## Development
 
 ### Building
+
+Install dependencies:
+
+```bash
+sudo apt install libgtk-3-dev libcairo2-dev libglib2.0-dev
+```
 
 For Ubuntu 18.04 & others with old GTK versions, [special build params](https://github.com/gotk3/gotk3/issues/693) are required:
 ```
