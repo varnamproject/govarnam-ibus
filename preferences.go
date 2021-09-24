@@ -253,12 +253,21 @@ func makeSettingsPage() *gtk.Box {
 	return settingsPage
 }
 
-func refreshRLWList(list *gtk.ListBox) {
-	words, err := varnam.GetRecentlyLearntWords(context.Background(), 30)
-	if err != nil {
-		return
-	}
+var (
+	rlwOffset int = 0
+	rlwLimit  int = 30
+)
 
+// Shorthand function for getting recently learned words
+func getRLW() []govarnamgo.Suggestion {
+	words, err := varnam.GetRecentlyLearntWords(context.Background(), rlwOffset, rlwLimit)
+	if err != nil {
+		return []govarnamgo.Suggestion{}
+	}
+	return words
+}
+
+func refreshRLWList(list *gtk.ListBox, words []govarnamgo.Suggestion) {
 	// Clear rows
 	for {
 		row := list.GetRowAtIndex(0)
@@ -298,7 +307,8 @@ func refreshRLWList(list *gtk.ListBox) {
 		unlearnButton.Connect("clicked", func() {
 			err := varnam.Unlearn(word)
 			log.Println(err)
-			refreshRLWList(list)
+
+			refreshRLWList(list, getRLW())
 		})
 
 		box.PackEnd(unlearnButton, false, true, 0)
@@ -321,11 +331,52 @@ func makeRLWPage() *gtk.Box {
 	rlwPage.SetMarginTop(12)
 	rlwPage.SetMarginBottom(12)
 
+	pageBtnBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
+	checkError(err)
+
+	prevBtn, err := gtk.ButtonNewWithLabel("Previous")
+	checkError(err)
+	prevBtn.SetSensitive(false)
+
+	nextBtn, err := gtk.ButtonNewWithLabel("Next")
+	checkError(err)
+
+	pageBtnBox.PackStart(prevBtn, false, false, 0)
+	pageBtnBox.PackEnd(nextBtn, false, true, 0)
+
 	list, err := gtk.ListBoxNew()
 	checkError(err)
 	list.SetSelectionMode(gtk.SELECTION_NONE)
 
-	refreshRLWList(list)
+	refreshRLWList(list, getRLW())
+
+	prevBtn.Connect("clicked", func(btn *gtk.Button) {
+		nextBtn.SetSensitive(true)
+
+		rlwOffset -= rlwLimit
+		if rlwOffset <= 0 {
+			rlwOffset = 0
+			prevBtn.SetSensitive(false)
+		}
+
+		refreshRLWList(list, getRLW())
+	})
+
+	nextBtn.Connect("clicked", func(btn *gtk.Button) {
+		prevBtn.SetSensitive(true)
+
+		rlwOffset += rlwLimit
+		words := getRLW()
+
+		if len(words) == 0 {
+			rlwOffset -= rlwLimit
+			nextBtn.SetSensitive(false)
+		} else {
+			refreshRLWList(list, words)
+		}
+	})
+
+	rlwPage.Add(pageBtnBox)
 	rlwPage.Add(list)
 
 	return rlwPage
