@@ -443,13 +443,8 @@ func VarnamEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 
 		varnam.Debug(*debug)
 
-		configLocal := retrieveSavedConf()
-		if configLocal == nil {
-			// Default config
-			varnam.SetConfig(getVarnamDefaultConfig())
-		} else {
-			varnam.SetConfig(*configLocal)
-		}
+		loadConfig()
+		varnam.SetConfig(config)
 	}
 
 	ibus.PublishEngine(conn, objectPath, engine)

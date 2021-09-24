@@ -86,18 +86,24 @@ func saveConf(config govarnamgo.Config) {
 	checkError(err)
 }
 
-func retrieveSavedConf() *govarnamgo.Config {
+func loadConfig() {
+	config = getVarnamDefaultConfig()
+
 	path := getConfPath()
 	if fileExists(path) {
-		var configLocal govarnamgo.Config
-		confFile, _ := ioutil.ReadFile(path)
+		confFile, err := ioutil.ReadFile(path)
 
-		if err := json.Unmarshal(confFile, &configLocal); err != nil {
-			log.Fatal("Parsing conf JSON failed, err: %s", err.Error())
+		if err != nil {
+			log.Print("Reading config JSON failed, err: %s", err.Error())
 		}
-		return &configLocal
+
+		confJSON := string(confFile)
+
+		err = json.NewDecoder(strings.NewReader(confJSON)).Decode(&config)
+		if err != nil {
+			log.Print("Parsing config JSON failed, err: %s", err.Error())
+		}
 	}
-	return nil
 }
 
 func getVarnamDefaultConfig() govarnamgo.Config {
@@ -328,12 +334,7 @@ func makeRLWPage() *gtk.Box {
 func showPrefs() {
 	gtk.Init(nil)
 
-	config = getVarnamDefaultConfig()
-
-	configLocal := retrieveSavedConf()
-	if configLocal != nil {
-		config = *configLocal
-	}
+	loadConfig()
 
 	// Create a new toplevel window, set its title, and connect it to the
 	// "destroy" signal to exit the GTK main loop when it is destroyed.
