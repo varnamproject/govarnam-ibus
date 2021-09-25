@@ -65,6 +65,29 @@ func (lt *LookupTable) CursorDown() {
 	}
 }
 
+func (lt *LookupTable) PreviousPage() {
+	prevPageFirstIndex := uint32(0)
+	if lt.CursorPos > lt.PageSize {
+		prevPageFirstIndex = lt.CursorPos - lt.PageSize
+	}
+
+	if prevPageFirstIndex <= 0 {
+		lt.CursorPos = 0
+	} else {
+		lt.CursorPos = prevPageFirstIndex
+	}
+}
+
+func (lt *LookupTable) NextPage() {
+	nextPageFirstIndex := lt.CursorPos + lt.PageSize
+
+	if nextPageFirstIndex >= uint32(len(lt.Candidates))-1 && lt.Round {
+		lt.CursorPos = uint32(len(lt.Candidates)) - 1
+	} else {
+		lt.CursorPos = nextPageFirstIndex
+	}
+}
+
 func (lt *LookupTable) Clear() {
 	lt.Candidates = []dbus.Variant{}
 	lt.Labels = []dbus.Variant{}

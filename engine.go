@@ -180,24 +180,42 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 		return false, nil
 	}
 
-	modifiers = modifiers & (ibus.IBUS_CONTROL_MASK | ibus.IBUS_MOD1_MASK)
-
-	if modifiers != 0 {
+	ctrlModifiers := modifiers & ibus.IBUS_CONTROL_MASK
+	if ctrlModifiers != 0 {
 		if len(e.preedit) == 0 {
 			return false, nil
-		} else {
-			if keyval == ibus.IBUS_Delete {
-				if *debug {
-					fmt.Println("CTRL + DEL = Unlearn word")
-				}
-				text := e.GetCandidate()
-				if text != nil {
-					varnam.Unlearn(text.Text)
-					e.VarnamUpdateLookupTable()
-				}
-			}
-			return true, nil
 		}
+		if keyval == ibus.IBUS_Delete {
+			if *debug {
+				fmt.Println("CTRL + DEL = Unlearn word")
+			}
+			text := e.GetCandidate()
+			if text != nil {
+				varnam.Unlearn(text.Text)
+				e.VarnamUpdateLookupTable()
+			}
+		}
+		return true, nil
+	}
+
+	altModifiers := modifiers & ibus.IBUS_MOD1_MASK
+	if altModifiers != 0 {
+		if len(e.preedit) == 0 {
+			return false, nil
+		}
+		if keyval == ibus.IBUS_Down {
+			if *debug {
+				fmt.Println("ALT + DOWN = Suggestions page down")
+			}
+			e.table.NextPage()
+		} else if keyval == ibus.IBUS_Up {
+			if *debug {
+				fmt.Println("ALT + UP = Suggestions page up")
+			}
+			e.table.PreviousPage()
+		}
+		e.UpdateLookupTable(e.table, true)
+		return true, nil
 	}
 
 	switch keyval {
