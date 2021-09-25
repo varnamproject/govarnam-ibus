@@ -49,9 +49,20 @@ func (e *VarnamEngine) VarnamCommitText(text *ibus.Text, shouldLearn bool) bool 
 }
 
 func getVarnamResult(ctx context.Context, channel chan<- []govarnamgo.Suggestion, word string) {
-	result, err := varnam.Transliterate(ctx, word)
-	if err == nil {
-		channel <- result
+	if inscriptMode {
+		result, err := varnam.GetSuggestions(ctx, word)
+		if err == nil {
+			channel <- result
+		} else {
+			log.Print(err)
+		}
+	} else {
+		result, err := varnam.Transliterate(ctx, word)
+		if err == nil {
+			channel <- result
+		} else {
+			log.Print(err)
+		}
 	}
 	close(channel)
 }
@@ -67,6 +78,12 @@ func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 	case result := <-resultChannel:
 		e.table.Clear()
 
+		if inscriptMode {
+			// Append original string at beginning
+			e.table.AppendCandidate(string(e.preedit))
+			e.table.AppendLabel("0:")
+		}
+
 		for _, sug := range result {
 			e.table.AppendCandidate(sug.Word)
 		}
@@ -77,9 +94,11 @@ func (e *VarnamEngine) InternalUpdateTable(ctx context.Context) {
 			label++
 		}
 
-		// Append original string at end
-		e.table.AppendCandidate(string(e.preedit))
-		e.table.AppendLabel("0:")
+		if !inscriptMode {
+			// Append original string at end
+			e.table.AppendCandidate(string(e.preedit))
+			e.table.AppendLabel("0:")
+		}
 
 		e.UpdateLookupTable(e.table, true)
 	}
@@ -367,12 +386,22 @@ func (e *VarnamEngine) ProcessKeyEvent(keyval uint32, keycode uint32, modifiers 
 			e.CommitText(ibus.NewText(""))
 		}
 
-		// Appending at cursor position
-		e.preedit = insertAtIndex(e.preedit, e.cursorPos, rune(keyval))
-		e.cursorPos++
-
 		if inscriptMode {
+			result := varnam.TransliterateGreedyTokenized(string(rune(keyval)))
+
+			// Appending at cursor position
+			if len(result) > 0 {
+				e.preedit = insertAtIndex(e.preedit, e.cursorPos, []rune(result[0].Word)[0])
+			} else {
+				e.preedit = insertAtIndex(e.preedit, e.cursorPos, rune(keyval))
+			}
+			e.cursorPos++
+
 			lastTypedCharacter = string(keyval)
+		} else {
+			// Appending at cursor position
+			e.preedit = insertAtIndex(e.preedit, e.cursorPos, rune(keyval))
+			e.cursorPos++
 		}
 
 		e.VarnamUpdatePreedit()
