@@ -7,6 +7,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 ARG1=${1:-install}
 
 if [ "$ARG1" == "install" ]; then
+  if [ -f "@INSTALL_PREFIX@/bin/varnam-ibus-engine" ]; then
+    sudo rm "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
+  fi
   sudo cp "$SCRIPT_DIR/varnam-ibus-engine" "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
 
   sudo mkdir -p "@INSTALL_PREFIX@/share/varnam/ibus/icons"
