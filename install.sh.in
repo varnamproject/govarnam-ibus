@@ -18,7 +18,7 @@ if [ "$ARG1" == "install" ]; then
 
   msg="Installation finished. Restart ibus to add new input method."
   echo "$msg"
-  notify-send "$msg" || true
+  notify-send "$msg" &> /dev/null || true
 elif [ "$ARG1" == "uninstall" ]; then
   sudo rm "@INSTALL_PREFIX@/bin/varnam-ibus-engine"
   for XML in $(find "$SCRIPT_DIR/component/"*.xml -printf "%f\n"); do

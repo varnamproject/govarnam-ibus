@@ -22,12 +22,12 @@ ibus-xml:
 	$(shell SCHEMES=("ml" "ta" "hi" "te" "ka" "bn"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)
 
 ubuntu-18:
-	go build -tags pango_1_42,gtk_3_22 -o ${BIN} .
+	go build -tags pango_1_42,gtk_3_22 -ldflags "-s -w" -o ${BIN} .
 	$(MAKE) ibus-xml
 	$(MAKE) install-script
 
 ubuntu-20:
-	go build -o ${BIN} .
+	go build -ldflags "-s -w" -o ${BIN} .
 	$(MAKE) ibus-xml
 	$(MAKE) install-script
 
