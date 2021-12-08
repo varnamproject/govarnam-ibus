@@ -409,9 +409,6 @@ func showPrefs() {
 		return
 	}
 
-	mainWin.SetDefaultSize(640, 480)
-	mainWin.SetResizable(false)
-	mainWin.SetPosition(gtk.WIN_POS_CENTER)
 	mainWin.SetTitle("Varnam " + varnam.GetSchemeDetails().DisplayName + " Preferences (" + engineName + ")")
 	mainWin.Connect("destroy", func() {
 		gtk.MainQuit()
@@ -435,6 +432,10 @@ func showPrefs() {
 	notebook.AppendPage(makeRLWPage(), rlwLabel)
 
 	win.Add(notebook)
+
+	mainWin.SetSizeRequest(640, 480)
+	mainWin.SetResizable(true)
+	mainWin.SetPosition(gtk.WIN_POS_CENTER)
 
 	// Recursively show all widgets contained in this window.
 	mainWin.ShowAll()

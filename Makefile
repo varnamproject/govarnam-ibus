@@ -27,7 +27,7 @@ ubuntu-14:
 	$(MAKE) install-script
 
 ubuntu-18:
-	go build -tags pango_1_42,gtk_3_22 -ldflags "-s -w" -o ${BIN} .
+	go build -tags "pango_1_42,gtk_3_22,glib_2_66,cairo_1_15" -ldflags "-s -w" -o ${BIN} .
 	$(MAKE) ibus-xml
 	$(MAKE) install-script
 
