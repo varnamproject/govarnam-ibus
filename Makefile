@@ -22,7 +22,7 @@ ibus-xml:
 	$(shell SCHEMES=("ml" "ta" "hi" "te" "ka" "bn"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)
 
 ubuntu-14:
-	CGO_CFLAGS="-w" go build -tags "pango_1_36,gtk_3_10,glib_2_40,cairo_1_13,gdk_pixbuf_2_30,gtk_deprecated" -ldflags "-s -w" -o ${BIN} .
+	CGO_CFLAGS="-w" go build -tags "pango_1_36,gtk_3_10,glib_2_40,cairo_1_13,gdk_pixbuf_2_30" -ldflags "-s -w" -o ${BIN} .
 	$(MAKE) ibus-xml
 	$(MAKE) install-script
 
