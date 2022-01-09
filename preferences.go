@@ -130,8 +130,11 @@ func makeSettingsPage() *gtk.Box {
 	settingsPage, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 6)
 	checkError(err)
 
-	settingsPage.SetMarginStart(12)
-	settingsPage.SetMarginEnd(12)
+	// gtk_widget_set_margin_left & right is deprecated since 3.12
+	// It got removed in 3.98: https://github.com/GNOME/gtk/blob/main/NEWS.pre-4.0#L939
+	// Our minimum GTK support needed is 3.10 (Ubuntu 14.04)
+	settingsPage.SetMarginLeft(12)
+	settingsPage.SetMarginRight(12)
 	settingsPage.SetMarginBottom(12)
 
 	/* Dictionary Match Exact Preference */
@@ -326,8 +329,8 @@ func makeRLWPage() *gtk.Box {
 	rlwPage, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 6)
 	checkError(err)
 
-	rlwPage.SetMarginStart(12)
-	rlwPage.SetMarginEnd(12)
+	rlwPage.SetMarginLeft(12)
+	rlwPage.SetMarginRight(12)
 	rlwPage.SetMarginTop(12)
 	rlwPage.SetMarginBottom(12)
 
@@ -406,9 +409,6 @@ func showPrefs() {
 		return
 	}
 
-	mainWin.SetDefaultSize(640, 480)
-	mainWin.SetResizable(false)
-	mainWin.SetPosition(gtk.WIN_POS_CENTER)
 	mainWin.SetTitle("Varnam " + varnam.GetSchemeDetails().DisplayName + " Preferences (" + engineName + ")")
 	mainWin.Connect("destroy", func() {
 		gtk.MainQuit()
@@ -419,8 +419,8 @@ func showPrefs() {
 
 	notebook.SetScrollable(true)
 
-	notebook.SetMarginStart(12)
-	notebook.SetMarginEnd(12)
+	notebook.SetMarginLeft(12)
+	notebook.SetMarginRight(12)
 	notebook.SetMarginBottom(12)
 
 	settingsLabel, err := gtk.LabelNew("Settings")
@@ -433,12 +433,9 @@ func showPrefs() {
 
 	win.Add(notebook)
 
-	settingsPage, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 6)
-	checkError(err)
-
-	settingsPage.SetMarginStart(12)
-	settingsPage.SetMarginEnd(12)
-	settingsPage.SetMarginBottom(12)
+	mainWin.SetSizeRequest(640, 480)
+	mainWin.SetResizable(true)
+	mainWin.SetPosition(gtk.WIN_POS_CENTER)
 
 	// Recursively show all widgets contained in this window.
 	mainWin.ShowAll()
