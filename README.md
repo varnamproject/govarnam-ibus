@@ -14,23 +14,19 @@ See instructions in website: https://varnamproject.github.io/download/linux
 
 ### Building
 
-Install dependencies:
+* Install dependencies:
 
 ```bash
 sudo apt install libgtk-3-dev libcairo2-dev libglib2.0-dev
 ```
 
-For Ubuntu 18.04 & others with old GTK versions, [special build params](https://github.com/gotk3/gotk3/issues/693) are required:
-```
-go build -tags pango_1_42,gtk_3_22 .
-```
-You can achieve the above with `make ubuntu-18`. This build will be **usable in majority of GNU/Linux distributions**.
+* Build
 
-You can also compile with latest GTK version with :
-```bash
-go build .
 ```
-or `make ubuntu-20`
+make ubuntu-14
+```
+
+The preferences dialog depends on GTK. The above command will build for **GTK 3.10** which means it'll work on Ubuntu 14.04 and later versions.
 
 ### Setup
 

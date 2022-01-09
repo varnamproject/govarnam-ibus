@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-18.04
     env:
-      VARNAM_UPSTREAM: https://varnam.subinsb.com
+      VARNAM_UPSTREAM: https://varnamproject.com
 
     steps:
       - uses: actions/checkout@v2
@@ -31,7 +31,7 @@ jobs:
       - name: Build GoVarnam-IBus Engine
         run: |
           sudo apt install libgtk-3-dev libcairo2-dev libglib2.0-dev
-          make ubuntu-18
+          make ubuntu-14
           make release
 
       - name: Archive production artifacts
