@@ -1,4 +1,5 @@
-FROM ubuntu:trusty 
+FROM ubuntu:trusty
+ARG TARGETARCH
 
 WORKDIR /root
 
@@ -8,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y wget libgtk-3-dev libcairo2-dev libglib2.0-dev
 
 # Install go
-RUN wget -O go.tar.gz https://go.dev/dl/go1.17.4.linux-amd64.tar.gz; \
+RUN wget -O go.tar.gz https://go.dev/dl/go1.17.4.linux-$TARGETARCH.tar.gz; \
 tar -xf go.tar.gz;
 
 RUN apt-get install -y git build-essential clang pkg-config zip;
@@ -20,7 +21,8 @@ ENV PATH="/root/go/bin:${PATH}"
 
 WORKDIR /root/govarnam
 
-RUN CC=clang make; \
+RUN git checkout $(git describe --tags $(git rev-list --tags --max-count=1)); \
+CC=clang make; \
 sudo make install; \
 make release
 
@@ -29,7 +31,7 @@ cp *.zip /extract
 
 WORKDIR /root/govarnam-ibus
 
-RUN git checkout gtk-3.10-ubuntu-14.04; \
+RUN git checkout $(git describe --tags $(git rev-list --tags --max-count=1)); \
 make ubuntu-14; \
 make release
 

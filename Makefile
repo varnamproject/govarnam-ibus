@@ -1,7 +1,7 @@
 BIN := varnam-ibus-engine
 INSTALL_PREFIX := /usr/local
 VERSION := $(shell echo $$(git describe --abbrev=0 --tags || echo "latest") | sed s/v//)
-RELEASE_NAME := varnam-ibus-engine-${VERSION}-${shell arch}
+RELEASE_NAME := varnam-ibus-engine-${VERSION}-${shell uname -m}
 IBUS_COMPONENT_INSTALL_LOC := "/usr/share/ibus/component"
 
 install-script:
