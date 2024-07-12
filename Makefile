@@ -19,7 +19,7 @@ ibus-xml:
 	$(shell mkdir component)
 	./${BIN} -s ml-inscript -lang ml -xml component/varnam-ml-inscript.xml -prefix ${INSTALL_PREFIX}
 
-	$(shell SCHEMES=("ml" "ta" "hi" "te" "ka" "bn" "ne"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)
+	$(shell SCHEMES=("ml" "ta" "hi" "te" "kn" "bn" "ne"); for s in $${SCHEMES[@]}; do echo $s; ./${BIN} -s $$s -lang $$s -xml component/varnam-$$s.xml -prefix ${INSTALL_PREFIX}; done)
 
 ubuntu-14:
 	CGO_CFLAGS="-w" go build -tags "pango_1_36,gtk_3_10,glib_2_40,cairo_1_13,gdk_pixbuf_2_30" -ldflags "-s -w" -o ${BIN} .
