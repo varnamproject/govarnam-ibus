@@ -48,5 +48,4 @@ release:
 	zip -r ${RELEASE_NAME}.zip ${RELEASE_NAME}/*
 
 clean:
-	rm "component/*.xml"
-	rmdir component
+	rm -rf component || true
